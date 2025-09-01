@@ -4,6 +4,7 @@ Plataforma completa de testing y aseguramiento de calidad para el ecosistema IA-
 
 ## 🚀 Servicios Incluidos
 
+- **🏠 Main Portal** (8845) - Dashboard principal unificado
 - **🧪 Test Manager** (8870) - Gestión de casos de prueba
 - **📊 Test Execution Engine** (8871) - Motor de ejecución de pruebas
 - **📈 Quality Analytics** (8872) - Análisis de calidad y métricas
@@ -11,6 +12,7 @@ Plataforma completa de testing y aseguramiento de calidad para el ecosistema IA-
 
 ## 🌐 URLs de Acceso
 
+- **🏠 Main Portal**: http://localhost:8845 (Dashboard principal)
 - **Test Manager**: http://localhost:8870
 - **Test Execution Engine**: http://localhost:8871
 - **Quality Analytics**: http://localhost:8872
@@ -85,6 +87,12 @@ cp docker/.env.example docker/.env
 
 # Ver logs
 ./scripts/logs.sh
+
+# Mostrar URLs de acceso
+./scripts/show-urls.sh
+
+# Ejecutar demo de pruebas
+./scripts/test-demo.sh
 ```
 
 ## 🔗 Integración con Otros Servicios
