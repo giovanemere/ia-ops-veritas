@@ -57,5 +57,5 @@ def check_service(url):
         return 'unavailable'
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8845))
+    port = int(os.environ.get('PORT', 8869))
     app.run(host='0.0.0.0', port=port, debug=True)
