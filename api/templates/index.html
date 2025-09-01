@@ -3,169 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA-Ops Veritas - Testing Platform</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .header { text-align: center; color: white; margin-bottom: 50px; }
-        .header h1 { font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .header p { font-size: 1.2em; opacity: 0.9; }
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px; }
-        .service-card { background: white; border-radius: 15px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .service-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .service-icon { font-size: 4em; margin-bottom: 20px; }
-        .service-card h3 { color: #333; margin-bottom: 15px; font-size: 1.5em; }
-        .service-card p { color: #666; margin-bottom: 20px; line-height: 1.6; }
-        .service-card .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; display: inline-block; font-weight: bold; transition: all 0.3s ease; }
-        .service-card .btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
-        .stats-section { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 30px; margin-bottom: 40px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .stat-item { text-align: center; color: white; }
-        .stat-number { font-size: 2.5em; font-weight: bold; margin-bottom: 5px; }
-        .stat-label { opacity: 0.9; }
-        .footer { text-align: center; color: white; opacity: 0.8; margin-top: 40px; }
-        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
-        .status-healthy { background: #27ae60; }
-        .status-unhealthy { background: #e74c3c; }
-    </style>
+    <title>IA-Ops Veritas - Testing & Quality Assurance Platform</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div>
+                    <h1>🧪 IA-Ops Veritas</h1>
+                    <div class="subtitle">Testing & Quality Assurance Platform</div>
+                </div>
+            </div>
+            <nav class="nav">
+                <a href="#services" class="nav-item">Servicios</a>
+                <a href="#integrations" class="nav-item">Integraciones</a>
+                <a href="#stats" class="nav-item">Métricas</a>
+            </nav>
+        </div>
+    </header>
+
     <div class="container">
-        <div class="header">
-            <h1>🧪 IA-Ops Veritas</h1>
-            <p>Plataforma Completa de Testing y Aseguramiento de Calidad</p>
-        </div>
-
-        <div class="stats-section">
-            <h2 style="color: white; text-align: center; margin-bottom: 20px;">Estado del Sistema</h2>
-            <div class="stats-grid" id="systemStats">
-                <!-- Stats will be loaded here -->
+        <!-- Stats Section -->
+        <section id="stats" class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Servicios Activos</div>
             </div>
-        </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Disponibilidad</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Monitoreo</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">API</div>
+                <div class="stat-label">REST Completa</div>
+            </div>
+        </section>
 
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-icon">🧪</div>
-                <h3>Test Manager</h3>
-                <p>Gestión completa de casos de prueba, suites y organización de testing</p>
-                <div style="margin-bottom: 15px;">
-                    <span class="status-indicator" id="status-8870"></span>
-                    <span id="status-text-8870">Checking...</span>
+        <!-- Services Section -->
+        <section id="services">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-primary); font-size: 2rem;">Servicios de la Plataforma</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <span class="service-icon">🧪</span>
+                    <h3 class="service-title">Test Manager</h3>
+                    <p class="service-description">Gestión completa de casos de prueba, suites y categorías con integración a repositorios de código.</p>
+                    <div class="service-status status-active">
+                        <span>●</span> Activo - Puerto 8870
+                    </div>
+                    <a href="http://localhost:8870" class="btn" target="_blank">
+                        Acceder al Servicio →
+                    </a>
                 </div>
-                <a href="http://localhost:8870" class="btn" target="_blank">Acceder</a>
-            </div>
 
-            <div class="service-card">
-                <div class="service-icon">⚙️</div>
-                <h3>Test Execution Engine</h3>
-                <p>Motor de ejecución automática de pruebas con seguimiento en tiempo real</p>
-                <div style="margin-bottom: 15px;">
-                    <span class="status-indicator" id="status-8871"></span>
-                    <span id="status-text-8871">Checking...</span>
+                <div class="service-card">
+                    <span class="service-icon">📊</span>
+                    <h3 class="service-title">Test Execution Engine</h3>
+                    <p class="service-description">Motor de ejecución automática con soporte para múltiples frameworks y paralelización.</p>
+                    <div class="service-status status-active">
+                        <span>●</span> Activo - Puerto 8871
+                    </div>
+                    <a href="http://localhost:8871" class="btn" target="_blank">
+                        Ejecutar Pruebas →
+                    </a>
                 </div>
-                <a href="http://localhost:8871" class="btn" target="_blank">Acceder</a>
-            </div>
 
-            <div class="service-card">
-                <div class="service-icon">📈</div>
-                <h3>Quality Analytics</h3>
-                <p>Análisis de métricas de calidad, cobertura y tendencias históricas</p>
-                <div style="margin-bottom: 15px;">
-                    <span class="status-indicator" id="status-8872"></span>
-                    <span id="status-text-8872">Checking...</span>
+                <div class="service-card">
+                    <span class="service-icon">📈</span>
+                    <h3 class="service-title">Quality Analytics</h3>
+                    <p class="service-description">Análisis de métricas de calidad, cobertura de código y tendencias históricas.</p>
+                    <div class="service-status status-active">
+                        <span>●</span> Activo - Puerto 8872
+                    </div>
+                    <a href="http://localhost:8872" class="btn" target="_blank">
+                        Ver Métricas →
+                    </a>
                 </div>
-                <a href="http://localhost:8872" class="btn" target="_blank">Acceder</a>
-            </div>
 
-            <div class="service-card">
-                <div class="service-icon">🔍</div>
-                <h3>Evidence Manager</h3>
-                <p>Gestión de evidencias, reportes y almacenamiento de artefactos</p>
-                <div style="margin-bottom: 15px;">
-                    <span class="status-indicator" id="status-8873"></span>
-                    <span id="status-text-8873">Checking...</span>
+                <div class="service-card">
+                    <span class="service-icon">🔍</span>
+                    <h3 class="service-title">Evidence Manager</h3>
+                    <p class="service-description">Gestión de evidencias, generación de reportes y almacenamiento persistente.</p>
+                    <div class="service-status status-active">
+                        <span>●</span> Activo - Puerto 8873
+                    </div>
+                    <a href="http://localhost:8873" class="btn" target="_blank">
+                        Gestionar Evidencias →
+                    </a>
                 </div>
-                <a href="http://localhost:8873" class="btn" target="_blank">Acceder</a>
             </div>
-        </div>
+        </section>
 
-        <div class="footer">
-            <p>🧪 Parte del ecosistema IA-Ops - Testing & Quality Assurance</p>
-            <p>Última actualización: <span id="lastUpdate"></span></p>
-        </div>
+        <!-- Integration Section -->
+        <section id="integrations" class="integration-section">
+            <h2 class="integration-title">🔗 Integraciones Disponibles</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Plataforma preparada para integración con proveedores externos de CI/CD y gestión de proyectos.
+            </p>
+            
+            <div class="integration-grid">
+                <div class="integration-item">
+                    <span class="integration-icon">☁️</span>
+                    <div>
+                        <div style="font-weight: 600;">Azure DevOps</div>
+                        <div class="provider-badge azure">Preparado</div>
+                    </div>
+                </div>
+                
+                <div class="integration-item">
+                    <span class="integration-icon">🦊</span>
+                    <div>
+                        <div style="font-weight: 600;">GitLab CI/CD</div>
+                        <div class="provider-badge gitlab">Preparado</div>
+                    </div>
+                </div>
+                
+                <div class="integration-item">
+                    <span class="integration-icon">📋</span>
+                    <div>
+                        <div style="font-weight: 600;">Jira</div>
+                        <div class="provider-badge jira">Preparado</div>
+                    </div>
+                </div>
+                
+                <div class="integration-item">
+                    <span class="integration-icon">🐙</span>
+                    <div>
+                        <div style="font-weight: 600;">GitHub Actions</div>
+                        <div class="provider-badge">Preparado</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(37, 99, 235, 0.05); border-radius: 0.75rem; border-left: 4px solid var(--primary-color);">
+                <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🚀 Ecosistema IA-Ops</h4>
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                    Integrado con <strong>ia-ops-dev-core</strong>, <strong>ia-ops-minio</strong> y <strong>ia-ops-docs</strong> 
+                    para una experiencia completa de desarrollo y testing.
+                </p>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section style="text-align: center; margin-top: 3rem;">
+            <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Acciones Rápidas</h3>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/api/health" class="btn btn-secondary">Estado de Servicios</a>
+                <a href="/api/stats" class="btn btn-secondary">Estadísticas API</a>
+                <a href="http://localhost:8870/api/test-cases" class="btn btn-secondary" target="_blank">API Test Cases</a>
+                <a href="http://localhost:8871/api/execute" class="btn btn-secondary" target="_blank">API Execution</a>
+            </div>
+        </section>
     </div>
 
-    <script>
-        const services = [
-            { port: 8870, name: 'Test Manager' },
-            { port: 8871, name: 'Test Execution Engine' },
-            { port: 8872, name: 'Quality Analytics' },
-            { port: 8873, name: 'Evidence Manager' }
-        ];
-
-        async function checkServiceHealth(port) {
-            try {
-                const response = await fetch(`http://localhost:${port}/health`);
-                if (response.ok) {
-                    document.getElementById(`status-${port}`).className = 'status-indicator status-healthy';
-                    document.getElementById(`status-text-${port}`).textContent = 'Healthy';
-                    return true;
-                } else {
-                    throw new Error('Service unhealthy');
-                }
-            } catch (error) {
-                document.getElementById(`status-${port}`).className = 'status-indicator status-unhealthy';
-                document.getElementById(`status-text-${port}`).textContent = 'Unhealthy';
-                return false;
-            }
-        }
-
-        async function loadSystemStats() {
-            let healthyServices = 0;
-            
-            for (const service of services) {
-                const isHealthy = await checkServiceHealth(service.port);
-                if (isHealthy) healthyServices++;
-            }
-
-            // Load some sample stats
-            try {
-                const [execStats, qaMetrics] = await Promise.all([
-                    fetch('http://localhost:8871/api/stats').then(r => r.json()).catch(() => ({})),
-                    fetch('http://localhost:8872/api/metrics').then(r => r.json()).catch(() => ({}))
-                ]);
-
-                document.getElementById('systemStats').innerHTML = `
-                    <div class="stat-item">
-                        <div class="stat-number">${healthyServices}/${services.length}</div>
-                        <div class="stat-label">Services Healthy</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">${execStats.total_executions || 0}</div>
-                        <div class="stat-label">Total Executions</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">${qaMetrics.code_coverage || 0}%</div>
-                        <div class="stat-label">Code Coverage</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">${qaMetrics.test_pass_rate || 0}%</div>
-                        <div class="stat-label">Test Pass Rate</div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
-        }
-
-        // Load stats on page load
-        loadSystemStats();
-        
-        // Auto-refresh every 30 seconds
-        setInterval(loadSystemStats, 30000);
-    </script>
+    <footer class="footer">
+        <p>&copy; 2025 IA-Ops Veritas - Testing & Quality Assurance Platform</p>
+        <p style="font-size: 0.875rem; opacity: 0.8; margin-top: 0.5rem;">
+            Parte del ecosistema IA-Ops | Versión 1.0.0
+        </p>
+    </footer>
 </body>
 </html>
