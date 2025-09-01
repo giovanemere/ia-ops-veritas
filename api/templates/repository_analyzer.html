@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Analyzer - IA-Ops Veritas</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .analysis-section {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>🔍 Repository Analyzer</h1>
+                <div class="subtitle">Análisis Inteligente de Repositorios</div>
+            </div>
+            <nav class="nav">
+                <a href="http://localhost:8874" class="nav-item">Project Manager</a>
+                <a href="http://localhost:8869" class="nav-item">Portal Principal</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Analysis Form -->
+        <section class="analysis-section">
+            <h2>Analizar Repositorio</h2>
+            <form id="analyzeForm">
+                <div class="form-group">
+                    <label>URL del Repositorio:</label>
+                    <input type="url" id="repoUrl" required placeholder="git@github.com:user/repo.git" value="git@github.com:giovanemere/ia-ops-dev-core.git">
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Proyecto:</label>
+                    <input type="text" id="projectName" required placeholder="ia-ops-dev-core" value="ia-ops-dev-core">
+                </div>
+                <button type="submit" class="btn">Analizar Repositorio</button>
+            </form>
+            
+            <div id="analysisProgress" style="display: none; margin-top: 1rem;">
+                <p>Analizando repositorio...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Results -->
+        <div id="analysisResults" style="display: none;">
+            <!-- Repository Structure -->
+            <section class="analysis-section">
+                <h3>📁 Estructura del Repositorio</h3>
+                <div id="repoStructure"></div>
+            </section>
+
+            <!-- Languages & Frameworks -->
+            <section class="analysis-section">
+                <h3>🛠️ Tecnologías Detectadas</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4>Lenguajes de Programación</h4>
+                        <div id="languagesList"></div>
+                    </div>
+                    <div>
+                        <h4>Frameworks y Herramientas</h4>
+                        <div id="frameworksList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Endpoints -->
+            <section class="analysis-section">
+                <h3>🔗 Endpoints de API</h3>
+                <div id="apiEndpoints"></div>
+            </section>
+
+            <!-- Components -->
+            <section class="analysis-section">
+                <h3>🧩 Componentes Identificados</h3>
+                <div id="componentsList"></div>
+            </section>
+
+            <!-- Complexity Metrics -->
+            <section class="analysis-section">
+                <h3>📊 Métricas de Complejidad</h3>
+                <div id="complexityMetrics"></div>
+            </section>
+
+            <!-- Generated Artifacts -->
+            <section class="analysis-section">
+                <h3>📋 Artefactos Generados</h3>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button onclick="generateUserStories()" class="btn">Generar Historias de Usuario</button>
+                    <button onclick="generateTestPlans()" class="btn">Generar Planes de Prueba</button>
+                    <button onclick="exportAnalysis()" class="btn btn-secondary">Exportar Análisis</button>
+                </div>
+                
+                <div id="userStories" style="display: none;">
+                    <h4>Historias de Usuario</h4>
+                    <div id="userStoriesList"></div>
+                </div>
+                
+                <div id="testPlans" style="display: none;">
+                    <h4>Planes de Prueba</h4>
+                    <div id="testPlansList"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8875/api';
+        let currentAnalysis = null;
+
+        document.getElementById('analyzeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const repoUrl = document.getElementById('repoUrl').value;
+            const projectName = document.getElementById('projectName').value;
+            
+            // Show progress
+            document.getElementById('analysisProgress').style.display = 'block';
+            simulateProgress();
+            
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        repository_url: repoUrl,
+                        project_name: projectName
+                    })
+                });
+                
+                const analysis = await response.json();
+                currentAnalysis = analysis;
+                
+                if (analysis.error) {
+                    alert('Error: ' + analysis.error);
+                    return;
+                }
+                
+                displayAnalysisResults(analysis);
+                
+            } catch (error) {
+                console.error('Error analyzing repository:', error);
+                alert('Error al analizar el repositorio');
+            } finally {
+                document.getElementById('analysisProgress').style.display = 'none';
+            }
+        });
+
+        function simulateProgress() {
+            let progress = 0;
+            const progressFill = document.querySelector('.progress-fill');
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                progressFill.style.width = progress + '%';
+            }, 500);
+        }
+
+        function displayAnalysisResults(analysis) {
+            document.getElementById('analysisResults').style.display = 'block';
+            
+            // Repository Structure
+            const structureHtml = Object.entries(analysis.structure || {})
+                .slice(0, 10) // Show first 10 directories
+                .map(([path, info]) => `
+                    <div style="margin: 0.5rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 0.25rem;">
+                        <strong>${path}</strong> - ${info.file_count} archivos
+                    </div>
+                `).join('');
+            document.getElementById('repoStructure').innerHTML = structureHtml;
+            
+            // Languages
+            const languagesHtml = Object.entries(analysis.languages || {})
+                .map(([lang, count]) => `
+                    <div class="provider-badge" style="margin: 0.25rem;">${lang}: ${count} archivos</div>
+                `).join('');
+            document.getElementById('languagesList').innerHTML = languagesHtml;
+            
+            // Frameworks
+            const frameworksHtml = (analysis.frameworks || [])
+                .map(framework => `
+                    <div class="provider-badge" style="margin: 0.25rem;">${framework}</div>
+                `).join('');
+            document.getElementById('frameworksList').innerHTML = frameworksHtml;
+            
+            // API Endpoints
+            const endpointsHtml = (analysis.api_endpoints || [])
+                .map(endpoint => `
+                    <div style="margin: 0.5rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 0.25rem;">
+                        <code>${endpoint.path}</code> - ${endpoint.file}
+                    </div>
+                `).join('');
+            document.getElementById('apiEndpoints').innerHTML = endpointsHtml || 'No se encontraron endpoints';
+            
+            // Components
+            const componentsHtml = (analysis.components || [])
+                .map(component => `
+                    <div class="provider-badge" style="margin: 0.25rem;">${component}</div>
+                `).join('');
+            document.getElementById('componentsList').innerHTML = componentsHtml;
+            
+            // Complexity Metrics
+            const metrics = analysis.complexity_metrics || {};
+            document.getElementById('complexityMetrics').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${metrics.total_files || 0}</div>
+                        <div class="stat-label">Archivos de Código</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${metrics.total_lines || 0}</div>
+                        <div class="stat-label">Líneas de Código</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${metrics.complexity_level || 'N/A'}</div>
+                        <div class="stat-label">Nivel de Complejidad</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function generateUserStories() {
+            if (!currentAnalysis) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/generate-user-stories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ analysis: currentAnalysis })
+                });
+                
+                const userStories = await response.json();
+                
+                const storiesHtml = userStories.map(story => `
+                    <div class="service-card">
+                        <h4>${story.id}: ${story.title}</h4>
+                        <p><strong>Componente:</strong> ${story.component}</p>
+                        <p>${story.description}</p>
+                        <div>
+                            <strong>Criterios de Aceptación:</strong>
+                            <ul>
+                                ${story.acceptance_criteria.map(criteria => `<li>${criteria}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="provider-badge ${story.priority.toLowerCase()}">${story.priority} Priority</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('userStoriesList').innerHTML = storiesHtml;
+                document.getElementById('userStories').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error generating user stories:', error);
+            }
+        }
+
+        async function generateTestPlans() {
+            if (!currentAnalysis) return;
+            
+            // First generate user stories if not already done
+            const userStoriesResponse = await fetch(`${API_BASE}/generate-user-stories`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ analysis: currentAnalysis })
+            });
+            const userStories = await userStoriesResponse.json();
+            
+            try {
+                const response = await fetch(`${API_BASE}/generate-test-plans`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_stories: userStories })
+                });
+                
+                const testPlans = await response.json();
+                
+                const plansHtml = testPlans.map(plan => `
+                    <div class="service-card">
+                        <h4>${plan.id}: ${plan.name}</h4>
+                        <p>${plan.description}</p>
+                        <p><strong>Historia de Usuario:</strong> ${plan.user_story_id}</p>
+                        <div>
+                            <strong>Casos de Prueba (${plan.test_cases.length}):</strong>
+                            <div style="margin-top: 0.5rem;">
+                                ${plan.test_cases.map(tc => `
+                                    <div style="margin: 0.25rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 0.25rem;">
+                                        <strong>${tc.id}:</strong> ${tc.name} 
+                                        <span class="provider-badge ${tc.priority.toLowerCase()}">${tc.priority}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('testPlansList').innerHTML = plansHtml;
+                document.getElementById('testPlans').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error generating test plans:', error);
+            }
+        }
+
+        function exportAnalysis() {
+            if (!currentAnalysis) return;
+            
+            const dataStr = JSON.stringify(currentAnalysis, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `${currentAnalysis.project_name}_analysis.json`;
+            link.click();
+        }
+    </script>
+</body>
+</html>

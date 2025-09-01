@@ -17,6 +17,43 @@ services:
       timeout: 10s
       retries: 3
 
+  project-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.project-manager
+    container_name: iaops-project-manager
+    restart: unless-stopped
+    ports:
+      - "8874:8874"
+    volumes:
+      - ../data:/app/data
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8874/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  repository-analyzer:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.repository-analyzer
+    container_name: iaops-repository-analyzer
+    restart: unless-stopped
+    ports:
+      - "8875:8875"
+    volumes:
+      - ../data:/app/data
+      - /tmp/repo_analysis:/tmp/repo_analysis
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8875/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   test-manager:
     build:
       context: ../api
