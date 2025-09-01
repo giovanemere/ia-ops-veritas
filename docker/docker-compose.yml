@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  unified-portal:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.unified-portal
+    container_name: iaops-unified-portal
+    restart: unless-stopped
+    ports:
+      - "8876:8876"
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8876/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   veritas-portal:
     build:
       context: ../api

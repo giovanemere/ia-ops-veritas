@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA-Ops Veritas - Unified Portal</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .portal-layout {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        
+        .portal-sidebar {
+            width: 280px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        
+        .portal-main {
+            margin-left: 280px;
+            flex: 1;
+            background: var(--light-bg);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+        
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+            border-left-color: var(--primary-color);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.1);
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .nav-icon {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .service-frame {
+            width: 100%;
+            height: calc(100vh - 80px);
+            border: none;
+            background: white;
+        }
+        
+        .portal-header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .service-content {
+            padding: 2rem;
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .welcome-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .portal-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .portal-sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .portal-main {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-layout">
+        <!-- Sidebar -->
+        <nav class="portal-sidebar">
+            <div class="sidebar-header">
+                <h2>🧪 IA-Ops Veritas</h2>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Testing & QA Platform</p>
+            </div>
+            
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="/" class="nav-item" onclick="loadDashboard(event)">
+                        <span class="nav-icon">🏠</span>
+                        <span>Overview</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Project Management</div>
+                    <a href="/service/project_manager" class="nav-item" onclick="loadService(event, 'project_manager')">
+                        <span class="nav-icon">📊</span>
+                        <span>Project Manager</span>
+                    </a>
+                    <a href="/service/repository_analyzer" class="nav-item" onclick="loadService(event, 'repository_analyzer')">
+                        <span class="nav-icon">🔍</span>
+                        <span>Repository Analyzer</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Testing Services</div>
+                    <a href="/service/test_manager" class="nav-item" onclick="loadService(event, 'test_manager')">
+                        <span class="nav-icon">🧪</span>
+                        <span>Test Manager</span>
+                    </a>
+                    <a href="/service/execution_engine" class="nav-item" onclick="loadService(event, 'execution_engine')">
+                        <span class="nav-icon">⚡</span>
+                        <span>Execution Engine</span>
+                    </a>
+                    <a href="/service/quality_analytics" class="nav-item" onclick="loadService(event, 'quality_analytics')">
+                        <span class="nav-icon">📈</span>
+                        <span>Quality Analytics</span>
+                    </a>
+                    <a href="/service/evidence_manager" class="nav-item" onclick="loadService(event, 'evidence_manager')">
+                        <span class="nav-icon">📋</span>
+                        <span>Evidence Manager</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">External</div>
+                    <a href="http://localhost:9898/minio/veritas-reports/" class="nav-item" target="_blank">
+                        <span class="nav-icon">🗂️</span>
+                        <span>MinIO Reports</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="portal-main">
+            <div class="portal-header">
+                <div class="breadcrumb">
+                    <span>IA-Ops Veritas</span>
+                    <span>/</span>
+                    <span id="currentService">Dashboard</span>
+                </div>
+                <div>
+                    <button onclick="runHealthCheck()" class="btn btn-secondary">🏥 Health Check</button>
+                </div>
+            </div>
+            
+            <div id="serviceContent" class="service-content">
+                <!-- Dashboard Content -->
+                <div id="dashboardContent" class="welcome-screen">
+                    <h1>🧪 Welcome to IA-Ops Veritas</h1>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">
+                        Unified Testing & Quality Assurance Platform
+                    </p>
+                    
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalProjects">0</div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalTests">0</div>
+                            <div class="stat-label">Test Cases</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">6</div>
+                            <div class="stat-label">Active Services</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">100%</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card">
+                        <h3>🚀 Quick Actions</h3>
+                        <div class="flex gap-3 justify-center flex-wrap mt-3">
+                            <button onclick="loadService(null, 'project_manager')" class="btn">📊 New Project</button>
+                            <button onclick="loadService(null, 'repository_analyzer')" class="btn">🔍 Analyze Repository</button>
+                            <button onclick="loadService(null, 'test_manager')" class="btn">🧪 Manage Tests</button>
+                            <button onclick="window.open('http://localhost:9898/minio/veritas-reports/', '_blank')" class="btn btn-secondary">📋 View Reports</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Content will be loaded here -->
+                <div id="serviceFrame" style="display: none;">
+                    <iframe id="serviceIframe" class="service-frame" src=""></iframe>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/veritas-utils.js"></script>
+    <script>
+        let currentService = null;
+        
+        function loadService(event, serviceName) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (event) {
+                event.target.closest('.nav-item').classList.add('active');
+            } else {
+                document.querySelector(`[onclick*="${serviceName}"]`).classList.add('active');
+            }
+            
+            // Update breadcrumb
+            const serviceNames = {
+                'project_manager': 'Project Manager',
+                'repository_analyzer': 'Repository Analyzer',
+                'test_manager': 'Test Manager',
+                'execution_engine': 'Execution Engine',
+                'quality_analytics': 'Quality Analytics',
+                'evidence_manager': 'Evidence Manager'
+            };
+            
+            document.getElementById('currentService').textContent = serviceNames[serviceName];
+            
+            // Load service content
+            const serviceUrls = {
+                'project_manager': 'http://localhost:8874',
+                'repository_analyzer': 'http://localhost:8875',
+                'test_manager': 'http://localhost:8870',
+                'execution_engine': 'http://localhost:8871',
+                'quality_analytics': 'http://localhost:8872',
+                'evidence_manager': 'http://localhost:8873'
+            };
+            
+            // Hide dashboard, show service frame
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('serviceFrame').style.display = 'block';
+            
+            // Load service in iframe
+            const iframe = document.getElementById('serviceIframe');
+            iframe.src = serviceUrls[serviceName];
+            
+            currentService = serviceName;
+            
+            // Update URL without page reload
+            history.pushState({service: serviceName}, '', `/service/${serviceName}`);
+        }
+        
+        function loadDashboard(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (event) {
+                event.target.closest('.nav-item').classList.add('active');
+            }
+            
+            // Update breadcrumb
+            document.getElementById('currentService').textContent = 'Dashboard';
+            
+            // Show dashboard, hide service frame
+            document.getElementById('dashboardContent').style.display = 'block';
+            document.getElementById('serviceFrame').style.display = 'none';
+            
+            currentService = null;
+            
+            // Update URL
+            history.pushState({}, '', '/');
+            
+            // Load dashboard stats
+            loadDashboardStats();
+        }
+        
+        async function loadDashboardStats() {
+            try {
+                // Load projects count
+                const projects = await VeritasUtils.get('projectManager', '/projects');
+                document.getElementById('totalProjects').textContent = projects.length;
+                
+                // Calculate total tests
+                let totalTests = 0;
+                projects.forEach(project => {
+                    totalTests += (project.test_plans || []).reduce((sum, plan) => 
+                        sum + (plan.test_cases || []).length, 0);
+                });
+                document.getElementById('totalTests').textContent = totalTests;
+                
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+        
+        async function runHealthCheck() {
+            VeritasUtils.showLoading('Checking service health...');
+            
+            const services = [
+                { name: 'Project Manager', url: 'http://localhost:8874/health' },
+                { name: 'Repository Analyzer', url: 'http://localhost:8875/health' },
+                { name: 'Test Manager', url: 'http://localhost:8870/health' },
+                { name: 'Execution Engine', url: 'http://localhost:8871/health' },
+                { name: 'Quality Analytics', url: 'http://localhost:8872/health' },
+                { name: 'Evidence Manager', url: 'http://localhost:8873/health' }
+            ];
+
+            let results = [];
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    results.push(`✅ ${service.name}: OK`);
+                } catch (error) {
+                    results.push(`❌ ${service.name}: Error`);
+                }
+            }
+
+            VeritasUtils.hideLoading();
+            VeritasUtils.showAlert('Health Check Results:\n\n' + results.join('\n'), 'success');
+        }
+        
+        // Handle browser back/forward
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.service) {
+                loadService(null, event.state.service);
+            } else {
+                loadDashboard();
+            }
+        });
+        
+        // Initialize based on current URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            if (path.startsWith('/service/')) {
+                const serviceName = path.split('/')[2];
+                loadService(null, serviceName);
+            } else {
+                loadDashboard();
+            }
+        });
+    </script>
+</body>
+</html>
