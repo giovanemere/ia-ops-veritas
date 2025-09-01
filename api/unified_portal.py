@@ -29,6 +29,14 @@ def load_service(service_name):
     service_url = SERVICES[service_name]
     return render_template('unified_portal.html', active_service=service_name, service_url=service_url)
 
+@app.route('/service/<service_name>/<path:subpath>')
+def load_service_subpath(service_name, subpath):
+    if service_name not in SERVICES:
+        return "Service not found", 404
+    
+    service_url = SERVICES[service_name]
+    return render_template('unified_portal.html', active_service=service_name, service_url=f"{service_url}/{subpath}")
+
 @app.route('/api/proxy/<service_name>/<path:endpoint>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def proxy_service(service_name, endpoint):
     if service_name not in SERVICES:

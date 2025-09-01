@@ -8,7 +8,18 @@ import subprocess
 from datetime import datetime
 import uuid
 
-from minio_integration import MinIOReportsService
+# Simple MinIO service without external dependency
+class MinIOReportsService:
+    def __init__(self):
+        self.minio_host = "localhost:9898"
+        self.bucket_name = "veritas-reports"
+        self.base_url = f"http://{self.minio_host}/minio/{self.bucket_name}"
+    
+    def get_project_reports_url(self, project_id):
+        return f"{self.base_url}/projects/{project_id}/reports/"
+    
+    def get_project_dashboard_url(self, project_id):
+        return f"{self.base_url}/projects/{project_id}/dashboard/"
 
 app = Flask(__name__)
 CORS(app)
