@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY test_manager.py .
+COPY quality_analytics.py .
 COPY templates/ ./templates/
 
 RUN mkdir -p data logs
@@ -18,9 +18,9 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 8870
+EXPOSE 8872
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8870/health || exit 1
+    CMD curl -f http://localhost:8872/health || exit 1
 
-CMD ["python", "test_manager.py"]
+CMD ["python", "quality_analytics.py"]

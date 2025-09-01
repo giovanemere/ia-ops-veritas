@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Execution Engine - IA-Ops Veritas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { background: #11998e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0e8678; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .execution-item { border: 1px solid #eee; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .status-running { border-left: 4px solid #f39c12; }
+        .status-completed { border-left: 4px solid #27ae60; }
+        .status-failed { border-left: 4px solid #e74c3c; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .progress-bar { width: 100%; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: #11998e; transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Test Execution Engine</h1>
+        <p>Motor de Ejecución de Pruebas - IA-Ops Veritas</p>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="totalExecutions">0</h3>
+                <p>Total Executions</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="runningExecutions">0</h3>
+                <p>Running</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="successRate">0%</h3>
+                <p>Success Rate</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Ejecutar Nueva Prueba</h2>
+            <form id="executionForm">
+                <div class="form-group">
+                    <label>Test ID:</label>
+                    <input type="text" id="testId" placeholder="ID del test a ejecutar" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Test:</label>
+                    <input type="text" id="testName" placeholder="Nombre descriptivo">
+                </div>
+                <div class="form-group">
+                    <label>Entorno:</label>
+                    <select id="environment">
+                        <option value="test">Test</option>
+                        <option value="staging">Staging</option>
+                        <option value="production">Production</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Ejecutar Test</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Ejecuciones Activas</h2>
+            <button onclick="loadExecutions()" class="btn">Actualizar Lista</button>
+            <div id="executionsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8871/api';
+
+        async function loadExecutions() {
+            try {
+                const [execResponse, statsResponse] = await Promise.all([
+                    fetch(`${API_BASE}/executions`),
+                    fetch(`${API_BASE}/stats`)
+                ]);
+                
+                const execData = await execResponse.json();
+                const statsData = await statsResponse.json();
+                
+                document.getElementById('totalExecutions').textContent = statsData.total_executions;
+                document.getElementById('runningExecutions').textContent = statsData.running;
+                document.getElementById('successRate').textContent = statsData.success_rate + '%';
+                
+                const executionsList = document.getElementById('executionsList');
+                executionsList.innerHTML = execData.executions.map(exec => `
+                    <div class="execution-item status-${exec.status}">
+                        <h4>${exec.test_name}</h4>
+                        <p><strong>Status:</strong> ${exec.status} | <strong>Environment:</strong> ${exec.environment}</p>
+                        <p><strong>Started:</strong> ${new Date(exec.started_at).toLocaleString()}</p>
+                        ${exec.completed_at ? `<p><strong>Completed:</strong> ${new Date(exec.completed_at).toLocaleString()}</p>` : ''}
+                        ${exec.duration ? `<p><strong>Duration:</strong> ${exec.duration}s</p>` : ''}
+                        ${exec.result ? `<p><strong>Result:</strong> ${exec.result}</p>` : ''}
+                        ${exec.status === 'running' ? `
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${exec.progress || 0}%"></div>
+                            </div>
+                            <button onclick="completeExecution('${exec.id}')" class="btn btn-danger">Completar Test</button>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading executions:', error);
+            }
+        }
+
+        async function completeExecution(executionId) {
+            try {
+                const response = await fetch(`${API_BASE}/executions/${executionId}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'completed',
+                        result: Math.random() > 0.3 ? 'passed' : 'failed',
+                        duration: Math.floor(Math.random() * 120) + 10
+                    })
+                });
+
+                if (response.ok) {
+                    loadExecutions();
+                }
+            } catch (error) {
+                console.error('Error completing execution:', error);
+            }
+        }
+
+        document.getElementById('executionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const executionData = {
+                test_id: document.getElementById('testId').value,
+                test_name: document.getElementById('testName').value || 'Test Execution',
+                environment: document.getElementById('environment').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/executions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(executionData)
+                });
+
+                if (response.ok) {
+                    document.getElementById('executionForm').reset();
+                    loadExecutions();
+                    alert('Ejecución iniciada exitosamente!');
+                }
+            } catch (error) {
+                console.error('Error starting execution:', error);
+                alert('Error al iniciar la ejecución');
+            }
+        });
+
+        // Load executions on page load
+        loadExecutions();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadExecutions, 5000);
+    </script>
+</body>
+</html>

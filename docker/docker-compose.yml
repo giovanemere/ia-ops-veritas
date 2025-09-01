@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  veritas-portal:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.main-portal
+    container_name: iaops-veritas-portal
+    restart: unless-stopped
+    ports:
+      - "${VERITAS_PORTAL_PORT:-8869}:8869"
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8869/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   test-manager:
     build:
       context: ../api

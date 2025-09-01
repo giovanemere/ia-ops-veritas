@@ -1,32 +1,87 @@
 #!/usr/bin/env python3
-"""
-Test Manager API
-Gestión de casos de prueba para IA-Ops Veritas
-"""
-
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template_string
 from flask_cors import CORS
 import os
 import json
 import logging
 from datetime import datetime
-from enum import Enum
+import uuid
 
 app = Flask(__name__)
 CORS(app)
 
-# Configuración
-TEST_CASES_FILE = '/app/data/test_cases.json'
-TEST_SUITES_FILE = '/app/data/test_suites.json'
-
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class TestStatus(Enum):
-    DRAFT = "draft"
-    ACTIVE = "active"
-    DEPRECATED = "deprecated"
+# In-memory storage for demo
+test_cases = []
+test_suites = []
+
+@app.route('/')
+def index():
+    with open('/app/templates/test_manager.html', 'r') as f:
+        return f.read()
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy", "service": "test-manager"})
+
+@app.route('/api/tests', methods=['GET'])
+def get_tests():
+    return jsonify({"tests": test_cases, "total": len(test_cases)})
+
+@app.route('/api/tests', methods=['POST'])
+def create_test():
+    data = request.get_json()
+    test_case = {
+        "id": str(uuid.uuid4()),
+        "name": data.get("name"),
+        "description": data.get("description"),
+        "suite": data.get("suite", "default"),
+        "priority": data.get("priority", "medium"),
+        "status": "active",
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    test_cases.append(test_case)
+    return jsonify(test_case), 201
+
+@app.route('/api/tests/<test_id>', methods=['GET'])
+def get_test(test_id):
+    test = next((t for t in test_cases if t["id"] == test_id), None)
+    if not test:
+        return jsonify({"error": "Test not found"}), 404
+    return jsonify(test)
+
+@app.route('/api/tests/<test_id>', methods=['PUT'])
+def update_test(test_id):
+    test = next((t for t in test_cases if t["id"] == test_id), None)
+    if not test:
+        return jsonify({"error": "Test not found"}), 404
+    
+    data = request.get_json()
+    test.update({
+        "name": data.get("name", test["name"]),
+        "description": data.get("description", test["description"]),
+        "suite": data.get("suite", test["suite"]),
+        "priority": data.get("priority", test["priority"]),
+        "updated_at": datetime.utcnow().isoformat()
+    })
+    return jsonify(test)
+
+@app.route('/api/tests/<test_id>', methods=['DELETE'])
+def delete_test(test_id):
+    global test_cases
+    test_cases = [t for t in test_cases if t["id"] != test_id]
+    return jsonify({"message": "Test deleted"}), 200
+
+@app.route('/api/suites', methods=['GET'])
+def get_suites():
+    return jsonify({"suites": test_suites, "total": len(test_suites)})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8870))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 class TestPriority(Enum):
     LOW = "low"

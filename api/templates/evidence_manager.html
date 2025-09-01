@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence Manager - IA-Ops Veritas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { background: #f5576c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #e8455d; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .evidence-item { border: 1px solid #eee; padding: 15px; margin: 10px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .evidence-info h4 { margin-bottom: 5px; }
+        .evidence-info p { color: #666; margin: 2px 0; }
+        .evidence-type { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .type-screenshot { background: #e3f2fd; color: #1976d2; }
+        .type-log { background: #f3e5f5; color: #7b1fa2; }
+        .type-report { background: #e8f5e8; color: #388e3c; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .report-item { border: 1px solid #eee; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .status-generating { color: #f39c12; }
+        .status-completed { color: #27ae60; }
+        .status-failed { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Evidence Manager</h1>
+        <p>Gestión de Evidencias y Reportes - IA-Ops Veritas</p>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="totalEvidence">0</h3>
+                <p>Total Evidence</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalReports">0</h3>
+                <p>Generated Reports</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Generar Nuevo Reporte</h2>
+            <form id="reportForm">
+                <div class="form-group">
+                    <label>Nombre del Reporte:</label>
+                    <input type="text" id="reportName" placeholder="Ej: Weekly Test Report" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Reporte:</label>
+                    <select id="reportType">
+                        <option value="pdf">PDF</option>
+                        <option value="html">HTML</option>
+                        <option value="excel">Excel</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeEvidence" checked> Incluir Evidencias
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeMetrics" checked> Incluir Métricas
+                    </label>
+                </div>
+                <button type="submit" class="btn">Generar Reporte</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Evidencias Disponibles</h2>
+            <button onclick="loadEvidence()" class="btn">Actualizar Lista</button>
+            <div id="evidenceList"></div>
+        </div>
+
+        <div class="card">
+            <h2>Reportes Generados</h2>
+            <button onclick="loadReports()" class="btn">Actualizar Reportes</button>
+            <div id="reportsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8873/api';
+
+        async function loadEvidence() {
+            try {
+                const response = await fetch(`${API_BASE}/evidence`);
+                const data = await response.json();
+                
+                document.getElementById('totalEvidence').textContent = data.evidence.length;
+                
+                const evidenceList = document.getElementById('evidenceList');
+                evidenceList.innerHTML = data.evidence.map(evidence => `
+                    <div class="evidence-item">
+                        <div class="evidence-info">
+                            <h4>${evidence.filename}</h4>
+                            <p><strong>Test ID:</strong> ${evidence.test_id}</p>
+                            <p><strong>Created:</strong> ${new Date(evidence.created_at).toLocaleString()}</p>
+                            <span class="evidence-type type-${evidence.type}">${evidence.type}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary">Download</button>
+                            <button class="btn btn-secondary">View</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading evidence:', error);
+            }
+        }
+
+        async function loadReports() {
+            try {
+                const response = await fetch(`${API_BASE}/reports`);
+                const data = await response.json();
+                
+                document.getElementById('totalReports').textContent = data.reports.length;
+                
+                const reportsList = document.getElementById('reportsList');
+                reportsList.innerHTML = data.reports.map(report => `
+                    <div class="report-item">
+                        <h4>${report.name}</h4>
+                        <p><strong>Type:</strong> ${report.type}</p>
+                        <p><strong>Generated:</strong> ${new Date(report.generated_at).toLocaleString()}</p>
+                        <p><strong>Status:</strong> <span class="status-${report.status}">${report.status}</span></p>
+                        ${report.status === 'completed' ? '<button class="btn">Download Report</button>' : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const reportData = {
+                name: document.getElementById('reportName').value,
+                type: document.getElementById('reportType').value,
+                include_evidence: document.getElementById('includeEvidence').checked,
+                include_metrics: document.getElementById('includeMetrics').checked
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/reports`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reportData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('reportForm').reset();
+                    loadReports();
+                    alert(`Reporte iniciado: ${result.id}`);
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('Error al generar el reporte');
+            }
+        });
+
+        // Load data on page load
+        loadEvidence();
+        loadReports();
+        
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            loadEvidence();
+            loadReports();
+        }, 10000);
+    </script>
+</body>
+</html>

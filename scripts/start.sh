@@ -32,11 +32,11 @@ docker compose up -d
 
 # Wait for services
 echo -e "${YELLOW}⏳ Waiting for services to be ready...${NC}"
-sleep 10
+sleep 15
 
 # Verify services
 echo -e "${YELLOW}🔍 Verifying services...${NC}"
-services=("8870:Test Manager" "8871:Test Execution Engine" "8872:Quality Analytics" "8873:Evidence Manager")
+services=("8869:Portal" "8870:Test Manager" "8871:Test Execution Engine" "8872:Quality Analytics" "8873:Evidence Manager")
 
 for service in "${services[@]}"; do
     port=$(echo $service | cut -d: -f1)
@@ -52,8 +52,6 @@ done
 echo ""
 echo -e "${GREEN}🎉 Veritas Testing Platform started!${NC}"
 echo ""
-echo -e "${BLUE}📊 Access URLs:${NC}"
-echo -e "   Test Manager:          ${YELLOW}http://localhost:8870${NC}"
-echo -e "   Test Execution Engine: ${YELLOW}http://localhost:8871${NC}"
-echo -e "   Quality Analytics:     ${YELLOW}http://localhost:8872${NC}"
-echo -e "   Evidence Manager:      ${YELLOW}http://localhost:8873${NC}"
+
+# Show URLs
+"$SCRIPT_DIR/show-urls.sh"
