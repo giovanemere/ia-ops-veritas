@@ -9,6 +9,9 @@ services:
     restart: unless-stopped
     ports:
       - "8877:8877"
+    environment:
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - IAOPS_REPOSITORY_MANAGER_API_KEY=${IAOPS_REPOSITORY_MANAGER_API_KEY}
     volumes:
       - /tmp/test_results:/tmp/test_results
     networks:
@@ -27,6 +30,9 @@ services:
     restart: unless-stopped
     ports:
       - "8876:8876"
+    environment:
+      - IAOPS_SWAGGER_PORTAL_URL=${IAOPS_SWAGGER_PORTAL_URL:-http://host.docker.internal:8870}
+      - IAOPS_PROVIDER_ADMIN_URL=${IAOPS_PROVIDER_ADMIN_URL:-http://host.docker.internal:8866}
     networks:
       - veritas-network
     healthcheck:
@@ -43,6 +49,11 @@ services:
     restart: unless-stopped
     ports:
       - "${VERITAS_PORTAL_PORT:-8869}:8869"
+    environment:
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - IAOPS_PROVIDER_ADMIN_URL=${IAOPS_PROVIDER_ADMIN_URL:-http://host.docker.internal:8866}
+      - IAOPS_REPOSITORY_MANAGER_API_KEY=${IAOPS_REPOSITORY_MANAGER_API_KEY}
+      - IAOPS_PROVIDER_ADMIN_API_KEY=${IAOPS_PROVIDER_ADMIN_API_KEY}
     networks:
       - veritas-network
     healthcheck:
@@ -59,6 +70,10 @@ services:
     restart: unless-stopped
     ports:
       - "8874:8874"
+    environment:
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - IAOPS_PROVIDER_ADMIN_URL=${IAOPS_PROVIDER_ADMIN_URL:-http://host.docker.internal:8866}
+      - IAOPS_PROVIDER_ADMIN_API_KEY=${IAOPS_PROVIDER_ADMIN_API_KEY}
     volumes:
       - ../data:/app/data
     networks:
@@ -77,6 +92,9 @@ services:
     restart: unless-stopped
     ports:
       - "8875:8875"
+    environment:
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - IAOPS_REPOSITORY_MANAGER_API_KEY=${IAOPS_REPOSITORY_MANAGER_API_KEY}
     volumes:
       - ../data:/app/data
       - /tmp/repo_analysis:/tmp/repo_analysis
@@ -97,7 +115,9 @@ services:
     ports:
       - "${TEST_MANAGER_PORT:-8870}:8870"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - IAOPS_TASK_MANAGER_URL=${IAOPS_TASK_MANAGER_URL:-http://host.docker.internal:8861}
+      - IAOPS_TASK_MANAGER_API_KEY=${IAOPS_TASK_MANAGER_API_KEY}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -120,8 +140,10 @@ services:
     ports:
       - "${TEST_EXECUTION_ENGINE_PORT:-8871}:8871"
     environment:
-      - DEV_CORE_TASK_URL=${DEV_CORE_TASK_URL:-http://localhost:8861}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - IAOPS_TASK_MANAGER_URL=${IAOPS_TASK_MANAGER_URL:-http://host.docker.internal:8861}
+      - IAOPS_TASK_MANAGER_API_KEY=${IAOPS_TASK_MANAGER_API_KEY}
+      - IAOPS_TESTING_PORTAL_URL=${IAOPS_TESTING_PORTAL_URL:-http://host.docker.internal:18860}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -144,8 +166,9 @@ services:
     ports:
       - "${QUALITY_ANALYTICS_PORT:-8872}:8872"
     environment:
-      - DEV_CORE_REPOSITORY_URL=${DEV_CORE_REPOSITORY_URL:-http://localhost:8860}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - IAOPS_REPOSITORY_MANAGER_API_KEY=${IAOPS_REPOSITORY_MANAGER_API_KEY}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -168,7 +191,8 @@ services:
     ports:
       - "${EVIDENCE_MANAGER_PORT:-8873}:8873"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - IAOPS_DEV_CORE_BASE_URL=${IAOPS_DEV_CORE_BASE_URL:-http://host.docker.internal:8860}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
