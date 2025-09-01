@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  test-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.test-manager
+    container_name: iaops-test-manager
+    restart: unless-stopped
+    ports:
+      - "${TEST_MANAGER_PORT:-8870}:8870"
+    environment:
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8870/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  test-execution-engine:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.execution-engine
+    container_name: iaops-test-execution-engine
+    restart: unless-stopped
+    ports:
+      - "${TEST_EXECUTION_ENGINE_PORT:-8871}:8871"
+    environment:
+      - DEV_CORE_TASK_URL=${DEV_CORE_TASK_URL:-http://localhost:8861}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8871/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  quality-analytics:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.quality-analytics
+    container_name: iaops-quality-analytics
+    restart: unless-stopped
+    ports:
+      - "${QUALITY_ANALYTICS_PORT:-8872}:8872"
+    environment:
+      - DEV_CORE_REPOSITORY_URL=${DEV_CORE_REPOSITORY_URL:-http://localhost:8860}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8872/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  evidence-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.evidence-manager
+    container_name: iaops-evidence-manager
+    restart: unless-stopped
+    ports:
+      - "${EVIDENCE_MANAGER_PORT:-8873}:8873"
+    environment:
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8873/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  veritas-network:
+    driver: bridge
+    name: iaops-veritas-network
