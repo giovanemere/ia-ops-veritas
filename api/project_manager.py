@@ -8,12 +8,15 @@ import subprocess
 from datetime import datetime
 import uuid
 
+from minio_integration import MinIOReportsService
+
 app = Flask(__name__)
 CORS(app)
 
 class ProjectManager:
     def __init__(self):
         self.projects_file = '/tmp/projects.json'
+        self.minio_service = MinIOReportsService()
         self.ensure_data_dir()
     
     def ensure_data_dir(self):
@@ -32,8 +35,9 @@ class ProjectManager:
     
     def create_project(self, data):
         projects = self.get_projects()
+        project_id = str(uuid.uuid4())
         project = {
-            'id': str(uuid.uuid4()),
+            'id': project_id,
             'name': data['name'],
             'repository': data['repository'],
             'description': data.get('description', ''),
@@ -43,7 +47,9 @@ class ProjectManager:
             'user_stories': [],
             'test_plans': [],
             'execution_plans': [],
-            'reports': []
+            'reports': [],
+            'minio_reports_url': self.minio_service.get_project_reports_url(project_id),
+            'minio_dashboard_url': self.minio_service.get_project_dashboard_url(project_id)
         }
         projects.append(project)
         self.save_projects(projects)
@@ -142,6 +148,65 @@ def generate_test_plans(user_stories):
 def health():
     return jsonify({"status": "healthy", "service": "project-manager"})
 
+@app.route('/api/projects/<project_id>/reports', methods=['GET'])
+def get_project_reports(project_id):
+    projects = project_manager.get_projects()
+    project = next((p for p in projects if p['id'] == project_id), None)
+    
+    if not project:
+        return jsonify({'error': 'Project not found'}), 404
+    
+    return jsonify({
+        'reports_url': project.get('minio_reports_url'),
+        'dashboard_url': project.get('minio_dashboard_url'),
+        'reports': project.get('reports', [])
+    })
+
+@app.route('/api/projects/<project_id>/generate-report', methods=['POST'])
+def generate_project_report(project_id):
+    projects = project_manager.get_projects()
+    project = next((p for p in projects if p['id'] == project_id), None)
+    
+    if not project:
+        return jsonify({'error': 'Project not found'}), 404
+    
+    # Mock execution results
+    execution_results = {
+        'execution_id': str(uuid.uuid4()),
+        'total_tests': 25,
+        'passed_tests': 23,
+        'failed_tests': 2,
+        'pass_rate': 92,
+        'start_time': datetime.now().isoformat(),
+        'duration': '5m 32s',
+        'environment': 'Production',
+        'test_cases': [
+            {'name': 'User Authentication Test', 'status': 'passed', 'duration': '1.2s', 'message': 'All assertions passed'},
+            {'name': 'API Integration Test', 'status': 'passed', 'duration': '2.1s', 'message': 'Response validation successful'},
+            {'name': 'Database Connection Test', 'status': 'failed', 'duration': '0.8s', 'message': 'Connection timeout'},
+        ]
+    }
+    
+    # Generate report
+    report_content = project_manager.minio_service.generate_execution_report(project, execution_results)
+    report_url = project_manager.minio_service.upload_report(project_id, 'execution', report_content)
+    
+    # Update project reports
+    project['reports'].append({
+        'id': str(uuid.uuid4()),
+        'type': 'execution',
+        'url': report_url,
+        'created_at': datetime.now().isoformat(),
+        'execution_results': execution_results
+    })
+    
+    project_manager.save_projects(projects)
+    
+    return jsonify({
+        'report_url': report_url,
+        'execution_results': execution_results
+    })
+
 @app.route('/api/projects/<project_id>/dashboard')
 def project_dashboard(project_id):
     projects = project_manager.get_projects()
@@ -158,6 +223,10 @@ def project_dashboard(project_id):
             'total_test_cases': sum(len(tp.get('test_cases', [])) for tp in project.get('test_plans', [])),
             'execution_rate': '85%',
             'pass_rate': '92%'
+        },
+        'minio_urls': {
+            'reports': project.get('minio_reports_url'),
+            'dashboard': project.get('minio_dashboard_url')
         }
     }
     

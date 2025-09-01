@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Execution Report - {{project_name}}</title>
+    <link rel="stylesheet" href="http://localhost:8869/static/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Test Execution Report</h1>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{total_tests}}</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{passed_tests}}</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{failed_tests}}</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{pass_rate}}%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

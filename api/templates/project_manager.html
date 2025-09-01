@@ -4,54 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Manager - IA-Ops Veritas</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <style>
-        .project-card {
-            background: var(--card-bg);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            box-shadow: var(--shadow);
-            border-left: 4px solid var(--primary-color);
-        }
-        .project-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 2rem;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 1rem;
-        }
-        .form-group {
-            margin: 1rem 0;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-        }
-    </style>
+    <link rel="stylesheet" href="http://localhost:8869/static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="header">
@@ -61,13 +15,18 @@
                 <div class="subtitle">Gestión Masiva de Proyectos de Testing</div>
             </div>
             <nav class="nav">
-                <button onclick="showCreateModal()" class="nav-item">+ Nuevo Proyecto</button>
+                <button onclick="VeritasUtils.showModal('createModal')" class="nav-item">+ Nuevo Proyecto</button>
                 <a href="http://localhost:8869" class="nav-item">Portal Principal</a>
             </nav>
         </div>
     </header>
 
     <div class="container">
+        <div class="nav-breadcrumb">
+            <a href="http://localhost:8869">Portal</a> <span>/</span>
+            <span>Project Manager</span>
+        </div>
+
         <!-- Stats Section -->
         <section class="stats-grid">
             <div class="stat-card">
@@ -90,7 +49,13 @@
 
         <!-- Projects List -->
         <section>
-            <h2 style="margin-bottom: 1.5rem;">Proyectos</h2>
+            <div class="flex justify-between items-center mb-3">
+                <h2>Proyectos</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadProjects()" class="btn btn-secondary">🔄 Actualizar</button>
+                    <button onclick="exportProjects()" class="btn btn-secondary">📊 Exportar</button>
+                </div>
+            </div>
             <div id="projectsList"></div>
         </section>
     </div>
@@ -98,7 +63,10 @@
     <!-- Create Project Modal -->
     <div id="createModal" class="modal">
         <div class="modal-content">
-            <h3>Crear Nuevo Proyecto</h3>
+            <div class="modal-header">
+                <h3>Crear Nuevo Proyecto</h3>
+                <button class="modal-close" onclick="VeritasUtils.hideModal('createModal')">&times;</button>
+            </div>
             <form id="createProjectForm">
                 <div class="form-group">
                     <label>Nombre del Proyecto:</label>
@@ -106,28 +74,26 @@
                 </div>
                 <div class="form-group">
                     <label>URL del Repositorio:</label>
-                    <input type="url" id="projectRepository" required placeholder="git@github.com:user/repo.git">
+                    <input type="url" id="projectRepository" required placeholder="https://github.com/user/repo.git">
                 </div>
                 <div class="form-group">
                     <label>Descripción:</label>
                     <textarea id="projectDescription" rows="3"></textarea>
                 </div>
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" onclick="hideCreateModal()" class="btn btn-secondary">Cancelar</button>
+                <div class="flex gap-2 justify-end">
+                    <button type="button" onclick="VeritasUtils.hideModal('createModal')" class="btn btn-secondary">Cancelar</button>
                     <button type="submit" class="btn">Crear Proyecto</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script src="http://localhost:8869/static/js/veritas-utils.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8874/api';
-        const ANALYZER_API = 'http://localhost:8875/api';
-
         async function loadProjects() {
             try {
-                const response = await fetch(`${API_BASE}/projects`);
-                const projects = await response.json();
+                VeritasUtils.showLoading('Cargando proyectos...');
+                const projects = await VeritasUtils.get('projectManager', '/projects');
                 
                 document.getElementById('totalProjects').textContent = projects.length;
                 
@@ -143,93 +109,107 @@
                 document.getElementById('totalTestCases').textContent = totalTestCases;
                 document.getElementById('totalUserStories').textContent = totalUserStories;
                 
-                const projectsList = document.getElementById('projectsList');
-                projectsList.innerHTML = projects.map(project => `
-                    <div class="project-card">
-                        <h3>${project.name}</h3>
-                        <p><strong>Repositorio:</strong> ${project.repository}</p>
-                        <p>${project.description}</p>
-                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                            <span class="provider-badge">Historias: ${(project.user_stories || []).length}</span>
-                            <span class="provider-badge">Planes: ${(project.test_plans || []).length}</span>
-                            <span class="provider-badge">Estado: ${project.status}</span>
-                        </div>
-                        <div class="project-actions">
-                            <button onclick="analyzeProject('${project.id}')" class="btn">Analizar Repositorio</button>
-                            <button onclick="viewDashboard('${project.id}')" class="btn btn-secondary">Dashboard</button>
-                            <button onclick="generateReports('${project.id}')" class="btn btn-secondary">Reportes</button>
-                        </div>
-                    </div>
-                `).join('');
+                renderProjects(projects);
+                VeritasUtils.showAlert('Proyectos cargados exitosamente', 'success');
                 
             } catch (error) {
                 console.error('Error loading projects:', error);
+                VeritasUtils.showAlert('Error al cargar proyectos', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
             }
         }
 
-        async function createProject(data) {
+        function renderProjects(projects) {
+            const projectsList = document.getElementById('projectsList');
+            projectsList.innerHTML = projects.map(project => `
+                <div class="service-card">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3>${project.name}</h3>
+                            <p class="text-secondary mb-2">${project.description}</p>
+                            <p><strong>Repositorio:</strong> <a href="${project.repository}" target="_blank" class="text-primary">${project.repository}</a></p>
+                        </div>
+                        <div class="badge badge-success">${project.status}</div>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <span class="badge badge-primary">Historias: ${(project.user_stories || []).length}</span>
+                        <span class="badge badge-primary">Planes: ${(project.test_plans || []).length}</span>
+                        <span class="badge badge-primary">Creado: ${VeritasUtils.formatDate(project.created_at)}</span>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="analyzeProject('${project.id}')" class="btn">🔍 Analizar</button>
+                        <button onclick="viewDashboard('${project.id}')" class="btn btn-secondary">📊 Dashboard</button>
+                        <button onclick="viewReports('${project.id}')" class="btn btn-secondary">📋 Reportes</button>
+                        <button onclick="generateReport('${project.id}')" class="btn btn-secondary">📄 Generar Reporte</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createProject() {
+            const data = VeritasUtils.getFormData('createProjectForm');
+            
             try {
-                const response = await fetch(`${API_BASE}/projects`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                if (response.ok) {
-                    hideCreateModal();
-                    loadProjects();
-                    alert('Proyecto creado exitosamente!');
-                }
+                VeritasUtils.showLoading('Creando proyecto...');
+                await VeritasUtils.post('projectManager', '/projects', data);
+                VeritasUtils.hideModal('createModal');
+                VeritasUtils.resetForm('createProjectForm');
+                loadProjects();
+                VeritasUtils.showAlert('Proyecto creado exitosamente', 'success');
             } catch (error) {
                 console.error('Error creating project:', error);
-                alert('Error al crear el proyecto');
+                VeritasUtils.showAlert('Error al crear el proyecto', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
             }
         }
 
         async function analyzeProject(projectId) {
             try {
-                const response = await fetch(`${API_BASE}/projects/${projectId}/analyze`, {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    alert(`Análisis completado!\nHistorias de Usuario: ${result.user_stories.length}\nPlanes de Prueba: ${result.test_plans.length}`);
-                    loadProjects();
-                }
+                VeritasUtils.showLoading('Analizando proyecto...');
+                const result = await VeritasUtils.post('projectManager', `/projects/${projectId}/analyze`, {});
+                VeritasUtils.showAlert(`Análisis completado! Historias: ${result.user_stories.length}, Planes: ${result.test_plans.length}`, 'success');
+                loadProjects();
             } catch (error) {
                 console.error('Error analyzing project:', error);
-                alert('Error al analizar el proyecto');
+                VeritasUtils.showAlert('Error al analizar el proyecto', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
             }
         }
 
         function viewDashboard(projectId) {
-            window.open(`/project/${projectId}/dashboard`, '_blank');
+            window.open(`http://localhost:8874/project/${projectId}/dashboard`, '_blank');
         }
 
-        function generateReports(projectId) {
-            window.open(`http://localhost:8873/project/${projectId}/reports`, '_blank');
+        function viewReports(projectId) {
+            window.open(`http://localhost:9898/minio/veritas-reports/projects/${projectId}/`, '_blank');
         }
 
-        function showCreateModal() {
-            document.getElementById('createModal').style.display = 'block';
+        async function generateReport(projectId) {
+            try {
+                VeritasUtils.showLoading('Generando reporte...');
+                // This would integrate with MinIO to generate and store reports
+                const reportUrl = `http://localhost:9898/minio/veritas-reports/projects/${projectId}/latest-report.html`;
+                VeritasUtils.showAlert('Reporte generado exitosamente', 'success');
+                window.open(reportUrl, '_blank');
+            } catch (error) {
+                console.error('Error generating report:', error);
+                VeritasUtils.showAlert('Error al generar el reporte', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
+            }
         }
 
-        function hideCreateModal() {
-            document.getElementById('createModal').style.display = 'none';
-            document.getElementById('createProjectForm').reset();
+        function exportProjects() {
+            // Export functionality
+            VeritasUtils.showAlert('Función de exportación en desarrollo', 'warning');
         }
 
         document.getElementById('createProjectForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
-            const data = {
-                name: document.getElementById('projectName').value,
-                repository: document.getElementById('projectRepository').value,
-                description: document.getElementById('projectDescription').value
-            };
-            
-            createProject(data);
+            createProject();
         });
 
         // Load projects on page load

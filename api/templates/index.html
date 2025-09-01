@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IA-Ops Veritas - Testing & Quality Assurance Platform</title>
     <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -20,6 +21,14 @@
                 <a href="#services" class="nav-item">Servicios</a>
                 <a href="#integrations" class="nav-item">Integraciones</a>
                 <a href="#stats" class="nav-item">Métricas</a>
+                <div class="dropdown">
+                    <button class="nav-item dropdown-toggle">🚀 Quick Access ▼</button>
+                    <div class="dropdown-content">
+                        <a href="http://localhost:8874" class="dropdown-item">📊 Create Project</a>
+                        <a href="http://localhost:8875" class="dropdown-item">🔍 Analyze Repository</a>
+                        <a href="http://localhost:9898/minio/veritas-reports/" class="dropdown-item">📋 View Reports</a>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
@@ -45,9 +54,20 @@
             </div>
         </section>
 
+        <!-- Quick Actions -->
+        <section class="service-card">
+            <h3>🚀 Acciones Rápidas</h3>
+            <div class="flex gap-3 flex-wrap">
+                <button onclick="createNewProject()" class="btn">📊 Nuevo Proyecto</button>
+                <button onclick="analyzeRepository()" class="btn">🔍 Analizar Repositorio</button>
+                <button onclick="viewReports()" class="btn btn-secondary">📋 Ver Reportes</button>
+                <button onclick="runHealthCheck()" class="btn btn-secondary">🏥 Health Check</button>
+            </div>
+        </section>
+
         <!-- Services Section -->
         <section id="services">
-            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-primary); font-size: 2rem;">Servicios de la Plataforma</h2>
+            <h2 class="text-center mb-4" style="font-size: 2rem;">Servicios de la Plataforma</h2>
             <div class="services-grid">
                 <div class="service-card">
                     <span class="service-icon">📊</span>
@@ -56,9 +76,10 @@
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8874
                     </div>
-                    <a href="http://localhost:8874" class="btn" target="_blank">
-                        Gestionar Proyectos →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8874" class="btn" target="_blank">Gestionar Proyectos →</a>
+                        <button onclick="testService('projectManager')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
 
                 <div class="service-card">
@@ -68,9 +89,10 @@
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8875
                     </div>
-                    <a href="http://localhost:8875" class="btn" target="_blank">
-                        Analizar Repositorio →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8875" class="btn" target="_blank">Analizar Repositorio →</a>
+                        <button onclick="testService('repositoryAnalyzer')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
 
                 <div class="service-card">
@@ -80,21 +102,23 @@
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8870
                     </div>
-                    <a href="http://localhost:8870" class="btn" target="_blank">
-                        Acceder al Servicio →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8870" class="btn" target="_blank">Acceder al Servicio →</a>
+                        <button onclick="testService('testManager')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
 
                 <div class="service-card">
-                    <span class="service-icon">📊</span>
+                    <span class="service-icon">⚡</span>
                     <h3 class="service-title">Test Execution Engine</h3>
                     <p class="service-description">Motor de ejecución automática con soporte para múltiples frameworks y paralelización.</p>
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8871
                     </div>
-                    <a href="http://localhost:8871" class="btn" target="_blank">
-                        Ejecutar Pruebas →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8871" class="btn" target="_blank">Ejecutar Pruebas →</a>
+                        <button onclick="testService('executionEngine')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
 
                 <div class="service-card">
@@ -104,33 +128,44 @@
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8872
                     </div>
-                    <a href="http://localhost:8872" class="btn" target="_blank">
-                        Ver Métricas →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8872" class="btn" target="_blank">Ver Métricas →</a>
+                        <button onclick="testService('qualityAnalytics')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
 
                 <div class="service-card">
-                    <span class="service-icon">🔍</span>
+                    <span class="service-icon">📋</span>
                     <h3 class="service-title">Evidence Manager</h3>
                     <p class="service-description">Gestión de evidencias, generación de reportes y almacenamiento persistente por proyecto.</p>
                     <div class="service-status status-active">
                         <span>●</span> Activo - Puerto 8873
                     </div>
-                    <a href="http://localhost:8873" class="btn" target="_blank">
-                        Gestionar Evidencias →
-                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <a href="http://localhost:8873" class="btn" target="_blank">Gestionar Evidencias →</a>
+                        <button onclick="testService('evidenceManager')" class="btn btn-secondary">Test</button>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- Integration Section -->
         <section id="integrations" class="integration-section">
-            <h2 class="integration-title">🔗 Integraciones Disponibles</h2>
+            <h2 class="integration-title">🔗 Integraciones y Reportes</h2>
             <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                Plataforma preparada para integración con proveedores externos de CI/CD y gestión de proyectos.
+                Plataforma preparada para integración con proveedores externos y gestión centralizada de reportes en MinIO.
             </p>
             
             <div class="integration-grid">
+                <div class="integration-item">
+                    <span class="integration-icon">🗂️</span>
+                    <div>
+                        <div style="font-weight: 600;">MinIO Reports</div>
+                        <div class="provider-badge">Configurado</div>
+                        <button onclick="viewMinIOReports()" class="btn btn-secondary mt-2">Ver Reportes</button>
+                    </div>
+                </div>
+                
                 <div class="integration-item">
                     <span class="integration-icon">☁️</span>
                     <div>
@@ -154,33 +189,14 @@
                         <div class="provider-badge jira">Preparado</div>
                     </div>
                 </div>
-                
-                <div class="integration-item">
-                    <span class="integration-icon">🐙</span>
-                    <div>
-                        <div style="font-weight: 600;">GitHub Actions</div>
-                        <div class="provider-badge">Preparado</div>
-                    </div>
-                </div>
             </div>
 
-            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(37, 99, 235, 0.05); border-radius: 0.75rem; border-left: 4px solid var(--primary-color);">
+            <div class="mt-4 p-4" style="background: rgba(37, 99, 235, 0.05); border-radius: 0.75rem; border-left: 4px solid var(--primary-color);">
                 <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🚀 Ecosistema IA-Ops</h4>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">
                     Integrado con <strong>ia-ops-dev-core</strong>, <strong>ia-ops-minio</strong> y <strong>ia-ops-docs</strong> 
                     para una experiencia completa de desarrollo y testing.
                 </p>
-            </div>
-        </section>
-
-        <!-- Quick Actions -->
-        <section style="text-align: center; margin-top: 3rem;">
-            <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Acciones Rápidas</h3>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="/api/health" class="btn btn-secondary">Estado de Servicios</a>
-                <a href="/api/stats" class="btn btn-secondary">Estadísticas API</a>
-                <a href="http://localhost:8870/api/test-cases" class="btn btn-secondary" target="_blank">API Test Cases</a>
-                <a href="http://localhost:8871/api/execute" class="btn btn-secondary" target="_blank">API Execution</a>
             </div>
         </section>
     </div>
@@ -191,5 +207,73 @@
             Parte del ecosistema IA-Ops | Versión 1.0.0
         </p>
     </footer>
+
+    <script src="/static/js/veritas-utils.js"></script>
+    <script>
+        function createNewProject() {
+            window.open('http://localhost:8874', '_blank');
+        }
+
+        function analyzeRepository() {
+            window.open('http://localhost:8875', '_blank');
+        }
+
+        function viewReports() {
+            window.open('http://localhost:9898/minio/veritas-reports/', '_blank');
+        }
+
+        function viewMinIOReports() {
+            window.open('http://localhost:9898/minio/veritas-reports/', '_blank');
+        }
+
+        async function runHealthCheck() {
+            VeritasUtils.showLoading('Checking service health...');
+            
+            const services = [
+                { name: 'Portal', url: 'http://localhost:8869/health' },
+                { name: 'Project Manager', url: 'http://localhost:8874/health' },
+                { name: 'Repository Analyzer', url: 'http://localhost:8875/health' },
+                { name: 'Test Manager', url: 'http://localhost:8870/health' },
+                { name: 'Execution Engine', url: 'http://localhost:8871/health' },
+                { name: 'Quality Analytics', url: 'http://localhost:8872/health' },
+                { name: 'Evidence Manager', url: 'http://localhost:8873/health' }
+            ];
+
+            let results = [];
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    results.push(`✅ ${service.name}: OK`);
+                } catch (error) {
+                    results.push(`❌ ${service.name}: Error`);
+                }
+            }
+
+            VeritasUtils.hideLoading();
+            alert('Health Check Results:\n\n' + results.join('\n'));
+        }
+
+        async function testService(serviceName) {
+            const serviceUrls = {
+                projectManager: 'http://localhost:8874/health',
+                repositoryAnalyzer: 'http://localhost:8875/health',
+                testManager: 'http://localhost:8870/health',
+                executionEngine: 'http://localhost:8871/health',
+                qualityAnalytics: 'http://localhost:8872/health',
+                evidenceManager: 'http://localhost:8873/health'
+            };
+
+            try {
+                const response = await fetch(serviceUrls[serviceName]);
+                if (response.ok) {
+                    VeritasUtils.showAlert(`${serviceName} is healthy`, 'success');
+                } else {
+                    VeritasUtils.showAlert(`${serviceName} returned error ${response.status}`, 'error');
+                }
+            } catch (error) {
+                VeritasUtils.showAlert(`${serviceName} is not responding`, 'error');
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,4 +1,6 @@
 /* IA-Ops Veritas - Professional CSS Framework */
+@import url('components.css');
+
 :root {
   --primary-color: #2563eb;
   --secondary-color: #1e40af;
