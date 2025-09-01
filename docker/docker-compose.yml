@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  test-results-viewer:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.test-results-viewer
+    container_name: iaops-test-results-viewer
+    restart: unless-stopped
+    ports:
+      - "8877:8877"
+    volumes:
+      - /tmp/test_results:/tmp/test_results
+    networks:
+      - veritas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8877/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   unified-portal:
     build:
       context: ../api

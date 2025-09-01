@@ -16,15 +16,15 @@
         
         .portal-sidebar {
             width: 280px;
-            background: var(--card-bg);
-            border-right: 1px solid var(--border-color);
+            background: var(--gradient-primary);
+            border-right: 1px solid var(--border-dark);
             position: fixed;
             left: 0;
             top: 0;
             height: 100vh;
             overflow-y: auto;
             z-index: 100;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
         }
         
         .portal-main {
@@ -34,9 +34,9 @@
         }
         
         .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--primary-color);
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--dark-bg);
             color: white;
         }
         
@@ -53,7 +53,7 @@
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.6);
             letter-spacing: 0.05em;
         }
         
@@ -61,21 +61,22 @@
             display: flex;
             align-items: center;
             padding: 0.75rem 1.5rem;
-            color: var(--text-primary);
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
             transition: all 0.2s;
             border-left: 3px solid transparent;
         }
         
         .nav-item:hover {
-            background: rgba(37, 99, 235, 0.05);
-            border-left-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent-color);
+            color: white;
         }
         
         .nav-item.active {
-            background: rgba(37, 99, 235, 0.1);
-            border-left-color: var(--primary-color);
-            color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.2);
+            border-left-color: var(--accent-color);
+            color: white;
             font-weight: 600;
         }
         
@@ -89,6 +90,8 @@
             height: calc(100vh - 80px);
             border: none;
             background: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
         }
         
         .portal-header {
@@ -96,8 +99,9 @@
             border-bottom: 1px solid var(--border-color);
             padding: 1rem 2rem;
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
+            box-shadow: var(--shadow);
         }
         
         .breadcrumb {
@@ -124,6 +128,42 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin: 2rem 0;
+        }
+        
+        .test-results-viewer {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .results-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .result-item:hover {
+            background: var(--light-bg);
+            border-color: var(--accent-color);
         }
         
         @media (max-width: 768px) {
@@ -193,10 +233,22 @@
                 </div>
                 
                 <div class="nav-section">
-                    <div class="nav-section-title">External</div>
+                    <div class="nav-section-title">Reports & Results</div>
+                    <a href="/service/test_results_viewer" class="nav-item" onclick="loadService(event, 'test_results_viewer')">
+                        <span class="nav-icon">📊</span>
+                        <span>Test Results Viewer</span>
+                    </a>
                     <a href="http://localhost:9898/minio/veritas-reports/" class="nav-item" target="_blank">
                         <span class="nav-icon">🗂️</span>
                         <span>MinIO Reports</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">External</div>
+                    <a href="http://localhost:9000" class="nav-item" target="_blank">
+                        <span class="nav-icon">🔧</span>
+                        <span>MinIO Console</span>
                     </a>
                 </div>
             </div>
@@ -248,7 +300,19 @@
                             <button onclick="loadService(null, 'project_manager')" class="btn">📊 New Project</button>
                             <button onclick="loadService(null, 'repository_analyzer')" class="btn">🔍 Analyze Repository</button>
                             <button onclick="loadService(null, 'test_manager')" class="btn">🧪 Manage Tests</button>
-                            <button onclick="window.open('http://localhost:9898/minio/veritas-reports/', '_blank')" class="btn btn-secondary">📋 View Reports</button>
+                            <button onclick="generateSampleReport()" class="btn">📊 Generate Sample Report</button>
+                        </div>
+                    </div>
+                    
+                    <div class="test-results-viewer">
+                        <div class="results-header">
+                            <h3>📊 Recent Test Results</h3>
+                            <button onclick="loadService(null, 'test_results_viewer')" class="btn btn-secondary">View All Results</button>
+                        </div>
+                        <div id="recentResults" class="results-list">
+                            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                                No test results available. Generate a sample report to get started.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -293,14 +357,26 @@
             
             document.getElementById('currentService').textContent = serviceNames[serviceName];
             
-            // Load service content
+            // Update service URLs
             const serviceUrls = {
                 'project_manager': 'http://localhost:8874',
                 'repository_analyzer': 'http://localhost:8875',
                 'test_manager': 'http://localhost:8870',
                 'execution_engine': 'http://localhost:8871',
                 'quality_analytics': 'http://localhost:8872',
-                'evidence_manager': 'http://localhost:8873'
+                'evidence_manager': 'http://localhost:8873',
+                'test_results_viewer': 'http://localhost:8877'
+            };
+            
+            // Update service names
+            const serviceNames = {
+                'project_manager': 'Project Manager',
+                'repository_analyzer': 'Repository Analyzer',
+                'test_manager': 'Test Manager',
+                'execution_engine': 'Execution Engine',
+                'quality_analytics': 'Quality Analytics',
+                'evidence_manager': 'Evidence Manager',
+                'test_results_viewer': 'Test Results Viewer'
             };
             
             // Hide dashboard, show service frame
@@ -345,6 +421,7 @@
             
             // Load dashboard stats
             loadDashboardStats();
+            loadRecentResults();
         }
         
         async function loadDashboardStats() {
@@ -366,7 +443,128 @@
             }
         }
         
-        async function runHealthCheck() {
+        async function generateSampleReport() {
+            VeritasUtils.showLoading('Generating sample test report...');
+            
+            const sampleData = {
+                project_name: 'IA-Ops Dev Core Sample',
+                execution_data: {
+                    execution_id: 'exec_' + Date.now(),
+                    duration: '3m 45s',
+                    environment: 'Development',
+                    coverage: '92',
+                    test_cases: [
+                        {
+                            name: 'User Authentication Test',
+                            description: 'Validates user login and session management',
+                            status: 'passed',
+                            duration: '1.2s',
+                            priority: 'High',
+                            category: 'Security',
+                            message: 'All authentication flows working correctly'
+                        },
+                        {
+                            name: 'API Integration Test',
+                            description: 'Tests REST API endpoints and responses',
+                            status: 'passed',
+                            duration: '2.1s',
+                            priority: 'High',
+                            category: 'Integration',
+                            message: 'All API endpoints responding correctly'
+                        },
+                        {
+                            name: 'Database Connection Test',
+                            description: 'Validates database connectivity and queries',
+                            status: 'failed',
+                            duration: '0.8s',
+                            priority: 'Critical',
+                            category: 'Infrastructure',
+                            message: 'Connection timeout after 30 seconds',
+                            error_details: 'ConnectionError: Unable to connect to database server at localhost:5432\\nTimeout: 30000ms\\nRetries: 3'
+                        },
+                        {
+                            name: 'Frontend Component Test',
+                            description: 'Tests React component rendering and interactions',
+                            status: 'passed',
+                            duration: '1.5s',
+                            priority: 'Medium',
+                            category: 'UI',
+                            message: 'All components rendered successfully'
+                        },
+                        {
+                            name: 'Performance Load Test',
+                            description: 'Tests system performance under load',
+                            status: 'passed',
+                            duration: '15.3s',
+                            priority: 'Medium',
+                            category: 'Performance',
+                            message: 'System handled 1000 concurrent users successfully'
+                        }
+                    ]
+                }
+            };
+            
+            try {
+                const response = await fetch('http://localhost:8877/api/generate-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sampleData)
+                });
+                
+                const result = await response.json();
+                
+                VeritasUtils.hideLoading();
+                VeritasUtils.showAlert('Sample test report generated successfully!', 'success');
+                
+                // Open the report in a new window
+                window.open(`http://localhost:8877${result.url}`, '_blank');
+                
+                // Refresh recent results
+                loadRecentResults();
+                
+            } catch (error) {
+                VeritasUtils.hideLoading();
+                VeritasUtils.showAlert('Error generating sample report', 'error');
+                console.error('Error:', error);
+            }
+        }
+        
+        async function loadRecentResults() {
+            try {
+                const response = await fetch('http://localhost:8877/api/reports');
+                const reports = await response.json();
+                
+                const recentResults = document.getElementById('recentResults');
+                
+                if (reports.length === 0) {
+                    recentResults.innerHTML = `
+                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                            No test results available. Generate a sample report to get started.
+                        </p>
+                    `;
+                    return;
+                }
+                
+                recentResults.innerHTML = reports.slice(0, 5).map(report => `
+                    <div class="result-item">
+                        <div>
+                            <strong>${report.filename}</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                Created: ${new Date(report.created_at).toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="window.open('http://localhost:8877${report.url}', '_blank')" class="btn btn-secondary">
+                                📊 View Report
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading recent results:', error);
+            }
+        }
             VeritasUtils.showLoading('Checking service health...');
             
             const services = [

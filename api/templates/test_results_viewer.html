@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results Viewer - IA-Ops Veritas</title>
+    <link rel="stylesheet" href="http://localhost:8876/static/css/main.css">
+    <link rel="stylesheet" href="http://localhost:8876/static/css/components.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>📊 Test Results Viewer</h1>
+                <div class="subtitle">HTML Test Results & Reports</div>
+            </div>
+            <nav class="nav">
+                <a href="http://localhost:8876" class="nav-item">🏠 Portal</a>
+                <button onclick="generateSampleReport()" class="nav-item">📊 Generate Sample</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="nav-breadcrumb">
+            <a href="http://localhost:8876">Portal</a> <span>/</span>
+            <span>Test Results Viewer</span>
+        </div>
+
+        <section class="service-card">
+            <h3>📋 Available Test Reports</h3>
+            <div class="flex justify-between items-center mb-3">
+                <p style="color: var(--text-secondary);">View and manage HTML test execution reports</p>
+                <button onclick="loadReports()" class="btn btn-secondary">🔄 Refresh</button>
+            </div>
+            <div id="reportsList"></div>
+        </section>
+    </div>
+
+    <script src="http://localhost:8876/static/js/veritas-utils.js"></script>
+    <script>
+        async function loadReports() {
+            try {
+                VeritasUtils.showLoading('Loading reports...');
+                const response = await fetch('/api/reports');
+                const reports = await response.json();
+                
+                const reportsList = document.getElementById('reportsList');
+                
+                if (reports.length === 0) {
+                    reportsList.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            <h4>No reports available</h4>
+                            <p>Generate a sample report to get started</p>
+                            <button onclick="generateSampleReport()" class="btn mt-3">📊 Generate Sample Report</button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                reportsList.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Created</th>
+                                <th>Size</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reports.map(report => `
+                                <tr>
+                                    <td><strong>${report.filename}</strong></td>
+                                    <td>${new Date(report.created_at).toLocaleString()}</td>
+                                    <td>${VeritasUtils.formatFileSize(report.size)}</td>
+                                    <td>
+                                        <button onclick="window.open('${report.url}', '_blank')" class="btn btn-secondary">
+                                            📊 View Report
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                VeritasUtils.showAlert('Error loading reports', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
+            }
+        }
+        
+        async function generateSampleReport() {
+            const sampleData = {
+                project_name: 'Sample Test Project',
+                execution_data: {
+                    execution_id: 'sample_' + Date.now(),
+                    duration: '2m 15s',
+                    environment: 'Development',
+                    coverage: '88',
+                    test_cases: [
+                        {
+                            name: 'Login Functionality Test',
+                            description: 'Tests user authentication and login process',
+                            status: 'passed',
+                            duration: '1.1s',
+                            priority: 'High',
+                            category: 'Authentication',
+                            message: 'Login successful with valid credentials'
+                        },
+                        {
+                            name: 'Data Validation Test',
+                            description: 'Validates input data and form submissions',
+                            status: 'failed',
+                            duration: '0.9s',
+                            priority: 'Medium',
+                            category: 'Validation',
+                            message: 'Validation failed for email format',
+                            error_details: 'AssertionError: Expected valid email format\\nActual: "invalid-email"\\nExpected pattern: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/'
+                        }
+                    ]
+                }
+            };
+            
+            try {
+                VeritasUtils.showLoading('Generating sample report...');
+                const response = await fetch('/api/generate-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sampleData)
+                });
+                
+                const result = await response.json();
+                
+                VeritasUtils.showAlert('Sample report generated successfully!', 'success');
+                window.open(result.url, '_blank');
+                loadReports();
+                
+            } catch (error) {
+                console.error('Error generating report:', error);
+                VeritasUtils.showAlert('Error generating sample report', 'error');
+            } finally {
+                VeritasUtils.hideLoading();
+            }
+        }
+        
+        // Load reports on page load
+        loadReports();
+    </script>
+</body>
+</html>
