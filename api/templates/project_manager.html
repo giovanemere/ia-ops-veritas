@@ -70,15 +70,15 @@
             <form id="createProjectForm">
                 <div class="form-group">
                     <label>Nombre del Proyecto:</label>
-                    <input type="text" id="projectName" required>
+                    <input type="text" name="name" required>
                 </div>
                 <div class="form-group">
                     <label>URL del Repositorio:</label>
-                    <input type="url" id="projectRepository" required placeholder="https://github.com/user/repo.git">
+                    <input type="url" name="repository" required placeholder="https://github.com/user/repo.git">
                 </div>
                 <div class="form-group">
                     <label>Descripción:</label>
-                    <textarea id="projectDescription" rows="3"></textarea>
+                    <textarea name="description" rows="3"></textarea>
                 </div>
                 <div class="flex gap-2 justify-end">
                     <button type="button" onclick="VeritasUtils.hideModal('createModal')" class="btn btn-secondary">Cancelar</button>
@@ -122,13 +122,30 @@
 
         function renderProjects(projects) {
             const projectsList = document.getElementById('projectsList');
-            projectsList.innerHTML = projects.map(project => `
+            projectsList.innerHTML = projects.map(project => {
+                const providers = project.providers || {};
+                const providerStatus = `
+                    <div class="flex gap-1 mt-2">
+                        <span class="badge ${providers.repository_synced ? 'badge-success' : 'badge-error'}">
+                            ${providers.repository_synced ? '✅' : '❌'} Repository
+                        </span>
+                        <span class="badge ${providers.github_connected ? 'badge-success' : 'badge-error'}">
+                            ${providers.github_connected ? '✅' : '❌'} GitHub
+                        </span>
+                        <span class="badge ${providers.tasks_created ? 'badge-success' : 'badge-error'}">
+                            ${providers.tasks_created ? '✅' : '❌'} Tasks
+                        </span>
+                    </div>
+                `;
+                
+                return `
                 <div class="service-card">
                     <div class="flex justify-between items-start">
                         <div>
                             <h3>${project.name}</h3>
                             <p class="text-secondary mb-2">${project.description}</p>
                             <p><strong>Repositorio:</strong> <a href="${project.repository}" target="_blank" class="text-primary">${project.repository}</a></p>
+                            ${providerStatus}
                         </div>
                         <div class="badge badge-success">${project.status}</div>
                     </div>
@@ -141,28 +158,41 @@
                         <button onclick="analyzeProject('${project.id}')" class="btn">🔍 Analizar</button>
                         <button onclick="viewDashboard('${project.id}')" class="btn btn-secondary">📊 Dashboard</button>
                         <button onclick="viewReports('${project.id}')" class="btn btn-secondary">📋 Reportes</button>
-                        <button onclick="generateReport('${project.id}')" class="btn btn-secondary">📄 Generar Reporte</button>
+                        <button onclick="checkProviders('${project.id}')" class="btn btn-secondary">🔗 Providers</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        async function createProject() {
-            const data = VeritasUtils.getFormData('createProjectForm');
+        function createProject() {
+            const formData = new FormData(document.getElementById('createProjectForm'));
+            const data = {
+                name: formData.get('name'),
+                repository: formData.get('repository'),
+                description: formData.get('description')
+            };
             
-            try {
-                VeritasUtils.showLoading('Creando proyecto...');
-                await VeritasUtils.post('projectManager', '/projects', data);
+            fetch('http://localhost:8874/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(project => {
                 VeritasUtils.hideModal('createModal');
                 VeritasUtils.resetForm('createProjectForm');
                 loadProjects();
                 VeritasUtils.showAlert('Proyecto creado exitosamente', 'success');
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Error creating project:', error);
-                VeritasUtils.showAlert('Error al crear el proyecto', 'error');
-            } finally {
-                VeritasUtils.hideLoading();
-            }
+                VeritasUtils.showAlert('Error al crear el proyecto: ' + error.message, 'error');
+            });
         }
 
         async function analyzeProject(projectId) {
@@ -200,6 +230,23 @@
             } finally {
                 VeritasUtils.hideLoading();
             }
+        }
+
+        function checkProviders(projectId) {
+            fetch('http://localhost:8874/api/providers/status')
+                .then(response => response.json())
+                .then(status => {
+                    let statusText = 'Dev-Core Providers Status:\n\n';
+                    Object.entries(status).forEach(([provider, info]) => {
+                        const icon = info.status === 'healthy' ? '✅' : '❌';
+                        statusText += `${icon} ${provider}: ${info.status}\n`;
+                    });
+                    alert(statusText);
+                })
+                .catch(error => {
+                    console.error('Error checking providers:', error);
+                    alert('Error checking provider status');
+                });
         }
 
         function exportProjects() {
