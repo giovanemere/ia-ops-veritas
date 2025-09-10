@@ -88,12 +88,19 @@
         </div>
     </div>
 
-    <script src="http://localhost:8869/static/js/veritas-utils.js"></script>
+    <script src="http://localhost:8869/static/js/veritas-utils.js?v=4&t=1725250755"></script>
+    <!-- Cache buster: 1725250755 -->
     <script>
         async function loadProjects() {
             try {
-                VeritasUtils.showLoading('Cargando proyectos...');
-                const projects = await VeritasUtils.get('projectManager', '/projects');
+                // Show loading
+                console.log('Loading projects...');
+                
+                const response = await fetch('http://localhost:8869/api/projects');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const projects = await response.json();
                 
                 document.getElementById('totalProjects').textContent = projects.length;
                 
@@ -110,13 +117,13 @@
                 document.getElementById('totalUserStories').textContent = totalUserStories;
                 
                 renderProjects(projects);
-                VeritasUtils.showAlert('Proyectos cargados exitosamente', 'success');
+                console.log('Projects loaded successfully');
                 
             } catch (error) {
                 console.error('Error loading projects:', error);
-                VeritasUtils.showAlert('Error al cargar proyectos', 'error');
+                alert('Error al cargar proyectos: ' + error.message);
             } finally {
-                VeritasUtils.hideLoading();
+                console.log('Loading complete');
             }
         }
 
@@ -172,7 +179,7 @@
                 description: formData.get('description')
             };
             
-            fetch('http://localhost:8874/api/projects', {
+            fetch('http://localhost:8869/api/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -210,7 +217,7 @@
         }
 
         function viewDashboard(projectId) {
-            window.open(`http://localhost:8874/project/${projectId}/dashboard`, '_blank');
+            window.open(`http://localhost:8869/project/${projectId}/dashboard`, '_blank');
         }
 
         function viewReports(projectId) {
@@ -233,7 +240,7 @@
         }
 
         function checkProviders(projectId) {
-            fetch('http://localhost:8874/api/providers/status')
+            fetch('http://localhost:8869/api/providers/status')
                 .then(response => response.json())
                 .then(status => {
                     let statusText = 'Dev-Core Providers Status:\n\n';

@@ -1,10 +1,13 @@
 # Environment files
 .env
-docker/.env
+.env.local
+.env.production
 
 # Data and logs
 data/*
 logs/*
+temp/
+temp_venv/
 !data/.gitkeep
 !logs/.gitkeep
 
@@ -18,6 +21,10 @@ env/
 venv/
 ENV/
 
+# Node.js
+node_modules/
+npm-debug.log*
+
 # IDE
 .vscode/
 .idea/
@@ -27,9 +34,6 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
-
-# Docker
-.docker/
 
 # Temporary files
 *.tmp

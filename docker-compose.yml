@@ -1,0 +1,47 @@
+services:
+  veritas-unified:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: iaops-veritas-unified
+    restart: unless-stopped
+    ports:
+    - ${VERITAS_UNIFIED_PORT:-8869}:8869
+    environment:
+    - POSTGRES_HOST=${POSTGRES_HOST:-iaops-postgres-main}
+    - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+    - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_admin_2024}
+    - REDIS_HOST=${REDIS_HOST:-iaops-redis-main}
+    - REDIS_PORT=${REDIS_PORT:-6379}
+    - MINIO_ENDPOINT=${MINIO_ENDPOINT:-ia-ops-minio-portal:9000}
+    - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+    - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    - MINIO_BUCKET=veritas-projects
+    - MINIO_CONSOLE_URL=${MINIO_CONSOLE_URL:-http://ia-ops-minio-portal:9001}
+    networks:
+    - iaops-shared-network
+    - iaops-database-network
+    - ia-ops-minio-integrated
+    - iaops-network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://${POSTGRES_HOST:-iaops-postgres-main}:8869/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+networks:
+  iaops-shared-network:
+    external: true
+  iaops-database-network:
+    external: true
+  ia-ops-minio-integrated:
+    external: true
+  iaops-network:
+    name: iaops-network
+    external: true

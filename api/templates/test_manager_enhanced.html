@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Manager Enhanced - IA-Ops Veritas</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .test-grid {
+            display: grid;
+            grid-template-columns: 50px 200px 300px 150px 100px 100px 150px 100px;
+            gap: 1px;
+            background: #ddd;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .grid-header, .grid-cell {
+            background: white;
+            padding: 8px;
+            border: none;
+            font-size: 12px;
+        }
+        .grid-header {
+            background: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+        }
+        .grid-cell input, .grid-cell select {
+            width: 100%;
+            border: none;
+            padding: 4px;
+            font-size: 12px;
+        }
+        .grid-cell input:focus, .grid-cell select:focus {
+            outline: 2px solid #007bff;
+        }
+        .status-pending { background-color: #fff3cd; }
+        .status-running { background-color: #d1ecf1; }
+        .status-passed { background-color: #d4edda; }
+        .status-failed { background-color: #f8d7da; }
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .execution-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>🧪 Test Manager Enhanced</h1>
+                <div class="subtitle">Gestión Masiva de Casos de Prueba</div>
+            </div>
+            <nav class="nav">
+                <a href="http://localhost:8869" class="nav-item">Portal Principal</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <button onclick="addTestCase()" class="btn btn-primary">+ Agregar Test Case</button>
+            <button onclick="addMultipleTests()" class="btn btn-secondary">+ Agregar 10 Tests</button>
+            <button onclick="executeSelected()" class="btn btn-success">▶️ Ejecutar Seleccionados</button>
+            <button onclick="executeAll()" class="btn btn-warning">▶️ Ejecutar Todos</button>
+            <button onclick="exportToExcel()" class="btn btn-info">📊 Exportar Excel</button>
+            <button onclick="importFromExcel()" class="btn btn-secondary">📁 Importar Excel</button>
+            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileImport(event)">
+        </div>
+
+        <!-- Test Cases Grid -->
+        <div class="test-grid" id="testGrid">
+            <div class="grid-header">✓</div>
+            <div class="grid-header">Nombre</div>
+            <div class="grid-header">Descripción</div>
+            <div class="grid-header">Tipo</div>
+            <div class="grid-header">Prioridad</div>
+            <div class="grid-header">Estado</div>
+            <div class="grid-header">Última Ejecución</div>
+            <div class="grid-header">Acciones</div>
+        </div>
+
+        <!-- Execution Panel -->
+        <div class="execution-panel" id="executionPanel" style="display: none;">
+            <h3>🚀 Ejecución en Progreso</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div id="executionStatus">Preparando ejecución...</div>
+            <div id="executionResults"></div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="stats-grid" id="resultsStats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="totalExecuted">0</div>
+                <div class="stat-label">Ejecutados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPassed">0</div>
+                <div class="stat-label">Exitosos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalFailed">0</div>
+                <div class="stat-label">Fallidos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="successRate">0%</div>
+                <div class="stat-label">Tasa de Éxito</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testCases = [];
+        let executionInProgress = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTestCases();
+        });
+
+        async function loadTestCases() {
+            try {
+                const response = await fetch('http://localhost:8869/api/tests');
+                testCases = await response.json();
+                renderTestGrid();
+            } catch (error) {
+                console.error('Error loading test cases:', error);
+                // Initialize with empty array if no tests exist
+                testCases = [];
+                renderTestGrid();
+            }
+        }
+
+        function renderTestGrid() {
+            const grid = document.getElementById('testGrid');
+            
+            // Clear existing rows (keep headers)
+            const headers = grid.querySelectorAll('.grid-header');
+            grid.innerHTML = '';
+            headers.forEach(header => grid.appendChild(header));
+
+            testCases.forEach((test, index) => {
+                addTestRow(test, index);
+            });
+        }
+
+        function addTestRow(test, index) {
+            const grid = document.getElementById('testGrid');
+            
+            // Checkbox
+            const checkbox = document.createElement('div');
+            checkbox.className = 'grid-cell';
+            checkbox.innerHTML = `<input type="checkbox" data-index="${index}">`;
+            
+            // Name
+            const name = document.createElement('div');
+            name.className = 'grid-cell';
+            name.innerHTML = `<input type="text" value="${test.name || ''}" onchange="updateTest(${index}, 'name', this.value)">`;
+            
+            // Description
+            const description = document.createElement('div');
+            description.className = 'grid-cell';
+            description.innerHTML = `<input type="text" value="${test.description || ''}" onchange="updateTest(${index}, 'description', this.value)">`;
+            
+            // Type
+            const type = document.createElement('div');
+            type.className = 'grid-cell';
+            type.innerHTML = `
+                <select onchange="updateTest(${index}, 'test_type', this.value)">
+                    <option value="unit" ${test.test_type === 'unit' ? 'selected' : ''}>Unit</option>
+                    <option value="integration" ${test.test_type === 'integration' ? 'selected' : ''}>Integration</option>
+                    <option value="e2e" ${test.test_type === 'e2e' ? 'selected' : ''}>E2E</option>
+                    <option value="performance" ${test.test_type === 'performance' ? 'selected' : ''}>Performance</option>
+                </select>
+            `;
+            
+            // Priority
+            const priority = document.createElement('div');
+            priority.className = 'grid-cell';
+            priority.innerHTML = `
+                <select onchange="updateTest(${index}, 'priority', this.value)">
+                    <option value="low" ${test.priority === 'low' ? 'selected' : ''}>Low</option>
+                    <option value="medium" ${test.priority === 'medium' ? 'selected' : ''}>Medium</option>
+                    <option value="high" ${test.priority === 'high' ? 'selected' : ''}>High</option>
+                    <option value="critical" ${test.priority === 'critical' ? 'selected' : ''}>Critical</option>
+                </select>
+            `;
+            
+            // Status
+            const status = document.createElement('div');
+            status.className = `grid-cell status-${test.status || 'pending'}`;
+            status.textContent = test.status || 'pending';
+            
+            // Last Execution
+            const lastExecution = document.createElement('div');
+            lastExecution.className = 'grid-cell';
+            lastExecution.textContent = test.last_execution || 'Never';
+            
+            // Actions
+            const actions = document.createElement('div');
+            actions.className = 'grid-cell';
+            actions.innerHTML = `
+                <button onclick="executeTest(${index})" class="btn btn-sm">▶️</button>
+                <button onclick="deleteTest(${index})" class="btn btn-sm btn-danger">🗑️</button>
+            `;
+            
+            grid.appendChild(checkbox);
+            grid.appendChild(name);
+            grid.appendChild(description);
+            grid.appendChild(type);
+            grid.appendChild(priority);
+            grid.appendChild(status);
+            grid.appendChild(lastExecution);
+            grid.appendChild(actions);
+        }
+
+        function addTestCase() {
+            const newTest = {
+                id: Date.now(),
+                name: `Test Case ${testCases.length + 1}`,
+                description: '',
+                test_type: 'unit',
+                priority: 'medium',
+                status: 'pending',
+                last_execution: null
+            };
+            
+            testCases.push(newTest);
+            renderTestGrid();
+        }
+
+        function addMultipleTests() {
+            for (let i = 0; i < 10; i++) {
+                addTestCase();
+            }
+        }
+
+        function updateTest(index, field, value) {
+            if (testCases[index]) {
+                testCases[index][field] = value;
+                saveTestCase(testCases[index]);
+            }
+        }
+
+        async function saveTestCase(test) {
+            try {
+                if (test.id && test.id > 1000000) {
+                    // New test case
+                    const response = await fetch('http://localhost:8869/api/tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(test)
+                    });
+                    const result = await response.json();
+                    test.id = result.id;
+                }
+            } catch (error) {
+                console.error('Error saving test case:', error);
+            }
+        }
+
+        function deleteTest(index) {
+            if (confirm('¿Eliminar este test case?')) {
+                testCases.splice(index, 1);
+                renderTestGrid();
+            }
+        }
+
+        function getSelectedTests() {
+            const checkboxes = document.querySelectorAll('#testGrid input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+        }
+
+        async function executeSelected() {
+            const selected = getSelectedTests();
+            if (selected.length === 0) {
+                alert('Selecciona al menos un test case');
+                return;
+            }
+            
+            const selectedTests = selected.map(index => testCases[index]);
+            await executeBatch(selectedTests);
+        }
+
+        async function executeAll() {
+            if (testCases.length === 0) {
+                alert('No hay test cases para ejecutar');
+                return;
+            }
+            
+            await executeBatch(testCases);
+        }
+
+        async function executeBatch(tests) {
+            if (executionInProgress) {
+                alert('Ya hay una ejecución en progreso');
+                return;
+            }
+
+            executionInProgress = true;
+            const panel = document.getElementById('executionPanel');
+            const progressFill = document.getElementById('progressFill');
+            const status = document.getElementById('executionStatus');
+            const results = document.getElementById('executionResults');
+            
+            panel.style.display = 'block';
+            results.innerHTML = '';
+            
+            let executed = 0;
+            let passed = 0;
+            let failed = 0;
+            
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                const progress = ((i + 1) / tests.length) * 100;
+                
+                progressFill.style.width = `${progress}%`;
+                status.textContent = `Ejecutando: ${test.name} (${i + 1}/${tests.length})`;
+                
+                try {
+                    const response = await fetch('http://localhost:8869/api/executions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            test_case_id: test.id,
+                            project_id: 1,
+                            execution_name: `Batch Execution - ${test.name}`
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    executed++;
+                    
+                    if (result.status === 'completed' && result.results.status === 'passed') {
+                        passed++;
+                        test.status = 'passed';
+                    } else {
+                        failed++;
+                        test.status = 'failed';
+                    }
+                    
+                    test.last_execution = new Date().toLocaleString();
+                    
+                    // Add result to display
+                    const resultDiv = document.createElement('div');
+                    resultDiv.innerHTML = `
+                        <span style="color: ${test.status === 'passed' ? 'green' : 'red'}">
+                            ${test.status === 'passed' ? '✅' : '❌'} ${test.name}
+                        </span>
+                    `;
+                    results.appendChild(resultDiv);
+                    
+                } catch (error) {
+                    console.error(`Error executing test ${test.name}:`, error);
+                    failed++;
+                    test.status = 'failed';
+                }
+                
+                // Small delay to show progress
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Update final status
+            status.textContent = `Ejecución completada: ${executed} tests ejecutados`;
+            
+            // Show results summary
+            document.getElementById('totalExecuted').textContent = executed;
+            document.getElementById('totalPassed').textContent = passed;
+            document.getElementById('totalFailed').textContent = failed;
+            document.getElementById('successRate').textContent = `${Math.round((passed / executed) * 100)}%`;
+            document.getElementById('resultsStats').style.display = 'grid';
+            
+            // Re-render grid with updated statuses
+            renderTestGrid();
+            
+            executionInProgress = false;
+        }
+
+        async function executeTest(index) {
+            const test = testCases[index];
+            await executeBatch([test]);
+        }
+
+        function exportToExcel() {
+            const csvContent = [
+                ['Name', 'Description', 'Type', 'Priority', 'Status', 'Last Execution'],
+                ...testCases.map(test => [
+                    test.name,
+                    test.description,
+                    test.test_type,
+                    test.priority,
+                    test.status,
+                    test.last_execution || ''
+                ])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `test_cases_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromExcel() {
+            document.getElementById('excelFile').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                const headers = lines[0].split(',');
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    if (values.length >= 4) {
+                        const test = {
+                            id: Date.now() + i,
+                            name: values[0] || `Imported Test ${i}`,
+                            description: values[1] || '',
+                            test_type: values[2] || 'unit',
+                            priority: values[3] || 'medium',
+                            status: 'pending',
+                            last_execution: null
+                        };
+                        testCases.push(test);
+                    }
+                }
+                
+                renderTestGrid();
+                alert(`Importados ${lines.length - 1} test cases`);
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

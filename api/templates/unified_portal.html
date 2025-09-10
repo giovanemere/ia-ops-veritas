@@ -341,13 +341,13 @@
         };
         
         const serviceUrls = {
-            'project_manager': 'http://localhost:8874',
-            'repository_analyzer': 'http://localhost:8875',
-            'test_manager': 'http://localhost:8870',
-            'execution_engine': 'http://localhost:8871',
-            'quality_analytics': 'http://localhost:8872',
-            'evidence_manager': 'http://localhost:8873',
-            'test_results_viewer': 'http://localhost:8877'
+            'project_manager': '/project_manager',
+            'repository_analyzer': 'http://localhost:8801',
+            'test_manager': '/test_manager',
+            'execution_engine': '/execution_engine',
+            'quality_analytics': '/quality_analytics',
+            'evidence_manager': '/evidence_manager',
+            'test_results_viewer': '/test_results_viewer'
         };
         
         function loadService(event, serviceName) {
@@ -417,7 +417,7 @@
         
         function loadDashboardStats() {
             // Simple stats loading without async/await
-            fetch('http://localhost:8874/api/projects')
+            fetch('/api/projects')
                 .then(response => response.json())
                 .then(projects => {
                     document.getElementById('totalProjects').textContent = projects.length;
@@ -493,45 +493,45 @@
         }
         
         function loadRecentResults() {
-            fetch('http://localhost:8877/api/reports')
+            fetch('/api/executions')
                 .then(response => response.json())
-                .then(reports => {
+                .then(executions => {
                     const recentResults = document.getElementById('recentResults');
                     
-                    if (reports.length === 0) {
+                    if (executions.length === 0) {
                         recentResults.innerHTML = `
                             <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
-                                No test results available. Generate a sample report to get started.
+                                No test executions available yet.
                             </p>
                         `;
                         return;
                     }
                     
-                    recentResults.innerHTML = reports.slice(0, 5).map(report => `
+                    recentResults.innerHTML = executions.slice(0, 5).map(execution => `
                         <div class="result-item">
                             <div>
-                                <strong>${report.filename}</strong>
+                                <strong>Test Execution #${execution.id}</strong>
                                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                                    Created: ${new Date(report.created_at).toLocaleString()}
+                                    Status: ${execution.status || 'Unknown'} | Created: ${new Date(execution.created_at).toLocaleString()}
                                 </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.open('http://localhost:8877${report.url}', '_blank')" class="btn btn-secondary">
-                                    📊 View Report
-                                </button>
                             </div>
                         </div>
                     `).join('');
                 })
                 .catch(error => {
                     console.error('Error loading recent results:', error);
+                    document.getElementById('recentResults').innerHTML = `
+                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                            No test executions available yet.
+                        </p>
+                    `;
                 });
         }
         
         function runHealthCheck() {
             const services = [
                 { name: 'Project Manager', url: 'http://localhost:8874/health' },
-                { name: 'Repository Analyzer', url: 'http://localhost:8875/health' },
+                { name: 'Repository Analyzer', url: 'http://localhost:8801/repository/health' },
                 { name: 'Test Manager', url: 'http://localhost:8870/health' },
                 { name: 'Execution Engine', url: 'http://localhost:8871/health' },
                 { name: 'Quality Analytics', url: 'http://localhost:8872/health' },

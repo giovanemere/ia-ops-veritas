@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CHANGELOG.md
+PORTAL_USAGE_GUIDE.md
+
+# Environment files
+.env*
+docker/.env*
+
+# Logs
+logs/
+*.log
+
+# Data
+data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+temp_venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+!api/Dockerfile.unified
+
+# Services (not needed for unified build)
+services/
+config/
+veritas/
+frontend/

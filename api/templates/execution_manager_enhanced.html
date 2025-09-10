@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execution Manager Enhanced - IA-Ops Veritas</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .execution-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .execution-queue {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .queue-item.running { border-left-color: #28a745; }
+        .queue-item.completed { border-left-color: #6c757d; }
+        .queue-item.failed { border-left-color: #dc3545; }
+        
+        .execution-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .real-time-log {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 20px 0;
+        }
+        
+        .execution-grid {
+            display: grid;
+            grid-template-columns: 200px 150px 100px 150px 200px 100px;
+            gap: 1px;
+            background: #ddd;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .parallel-execution {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .worker-status {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .worker {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .worker.busy { background: #fff3cd; }
+        .worker.idle { background: #d4edda; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>⚡ Execution Manager Enhanced</h1>
+                <div class="subtitle">Ejecución Masiva y Paralela de Pruebas</div>
+            </div>
+            <nav class="nav">
+                <a href="http://localhost:8869" class="nav-item">Portal Principal</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Execution Controls -->
+        <div class="execution-controls">
+            <button onclick="startBatchExecution()" class="btn btn-success">🚀 Ejecutar Lote</button>
+            <button onclick="startParallelExecution()" class="btn btn-primary">⚡ Ejecución Paralela</button>
+            <button onclick="pauseExecution()" class="btn btn-warning">⏸️ Pausar</button>
+            <button onclick="stopExecution()" class="btn btn-danger">⏹️ Detener</button>
+            <button onclick="scheduleExecution()" class="btn btn-info">⏰ Programar</button>
+            <select id="executionMode">
+                <option value="sequential">Secuencial</option>
+                <option value="parallel">Paralelo (2 workers)</option>
+                <option value="parallel4">Paralelo (4 workers)</option>
+                <option value="parallel8">Paralelo (8 workers)</option>
+            </select>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="queuedTests">0</div>
+                <div class="stat-label">En Cola</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="runningTests">0</div>
+                <div class="stat-label">Ejecutando</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completedTests">0</div>
+                <div class="stat-label">Completados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">Fallidos</div>
+            </div>
+        </div>
+
+        <!-- Execution Dashboard -->
+        <div class="execution-dashboard">
+            <!-- Execution Queue -->
+            <div class="execution-queue">
+                <h3>📋 Cola de Ejecución</h3>
+                <div id="executionQueue"></div>
+            </div>
+
+            <!-- Parallel Workers -->
+            <div class="parallel-execution">
+                <h3>👥 Workers Paralelos</h3>
+                <div class="worker-status" id="workerStatus"></div>
+                <div>
+                    <label>Workers Activos: </label>
+                    <input type="range" id="workerCount" min="1" max="8" value="2" onchange="updateWorkers(this.value)">
+                    <span id="workerCountLabel">2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Execution Log -->
+        <div class="real-time-log" id="executionLog">
+            [INFO] Execution Manager iniciado...<br>
+            [INFO] Esperando comandos de ejecución...<br>
+        </div>
+
+        <!-- Execution History Grid -->
+        <h3>📊 Historial de Ejecuciones</h3>
+        <div class="execution-grid" id="executionGrid">
+            <div class="grid-header">Nombre</div>
+            <div class="grid-header">Estado</div>
+            <div class="grid-header">Duración</div>
+            <div class="grid-header">Inicio</div>
+            <div class="grid-header">Resultado</div>
+            <div class="grid-header">Acciones</div>
+        </div>
+    </div>
+
+    <script>
+        let executionQueue = [];
+        let workers = [];
+        let executionHistory = [];
+        let isExecuting = false;
+        let isPaused = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeWorkers(2);
+            loadExecutionHistory();
+            startLogUpdater();
+        });
+
+        function initializeWorkers(count) {
+            workers = [];
+            for (let i = 0; i < count; i++) {
+                workers.push({
+                    id: i + 1,
+                    status: 'idle',
+                    currentTest: null,
+                    startTime: null
+                });
+            }
+            updateWorkerDisplay();
+        }
+
+        function updateWorkers(count) {
+            document.getElementById('workerCountLabel').textContent = count;
+            initializeWorkers(parseInt(count));
+        }
+
+        function updateWorkerDisplay() {
+            const container = document.getElementById('workerStatus');
+            container.innerHTML = '';
+            
+            workers.forEach(worker => {
+                const div = document.createElement('div');
+                div.className = `worker ${worker.status}`;
+                div.innerHTML = `
+                    <div>Worker ${worker.id}</div>
+                    <div>${worker.status}</div>
+                    ${worker.currentTest ? `<div style="font-size: 10px;">${worker.currentTest}</div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function loadExecutionHistory() {
+            try {
+                const response = await fetch('http://localhost:8869/api/executions');
+                executionHistory = await response.json();
+                renderExecutionGrid();
+            } catch (error) {
+                console.error('Error loading execution history:', error);
+                executionHistory = [];
+            }
+        }
+
+        function renderExecutionGrid() {
+            const grid = document.getElementById('executionGrid');
+            
+            // Clear existing rows (keep headers)
+            const headers = grid.querySelectorAll('.grid-header');
+            grid.innerHTML = '';
+            headers.forEach(header => grid.appendChild(header));
+
+            executionHistory.forEach(execution => {
+                addExecutionRow(execution);
+            });
+        }
+
+        function addExecutionRow(execution) {
+            const grid = document.getElementById('executionGrid');
+            
+            const cells = [
+                execution.execution_name || 'Unnamed',
+                execution.status || 'unknown',
+                calculateDuration(execution),
+                formatDate(execution.executed_at),
+                execution.result || 'N/A',
+                `<button onclick="viewExecution(${execution.id})" class="btn btn-sm">👁️</button>`
+            ];
+            
+            cells.forEach(content => {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.innerHTML = content;
+                grid.appendChild(cell);
+            });
+        }
+
+        async function startBatchExecution() {
+            if (isExecuting) {
+                logMessage('[WARNING] Ejecución ya en progreso');
+                return;
+            }
+
+            // Load test cases for execution
+            try {
+                const response = await fetch('http://localhost:8869/api/tests');
+                const testCases = await response.json();
+                
+                if (testCases.length === 0) {
+                    logMessage('[ERROR] No hay test cases disponibles');
+                    return;
+                }
+
+                // Add tests to queue
+                executionQueue = testCases.map(test => ({
+                    id: test.id,
+                    name: test.name,
+                    status: 'queued',
+                    test: test
+                }));
+
+                updateQueueDisplay();
+                updateStats();
+                
+                const mode = document.getElementById('executionMode').value;
+                
+                if (mode === 'sequential') {
+                    await executeSequential();
+                } else {
+                    await executeParallel();
+                }
+                
+            } catch (error) {
+                logMessage(`[ERROR] Error cargando test cases: ${error.message}`);
+            }
+        }
+
+        async function executeSequential() {
+            isExecuting = true;
+            logMessage('[INFO] Iniciando ejecución secuencial...');
+            
+            for (let i = 0; i < executionQueue.length; i++) {
+                if (!isExecuting || isPaused) break;
+                
+                const queueItem = executionQueue[i];
+                queueItem.status = 'running';
+                updateQueueDisplay();
+                updateStats();
+                
+                logMessage(`[INFO] Ejecutando: ${queueItem.name}`);
+                
+                try {
+                    const result = await executeTest(queueItem.test);
+                    queueItem.status = result.status === 'completed' ? 'completed' : 'failed';
+                    queueItem.result = result;
+                    
+                    logMessage(`[SUCCESS] ${queueItem.name} - ${queueItem.status}`);
+                } catch (error) {
+                    queueItem.status = 'failed';
+                    logMessage(`[ERROR] ${queueItem.name} - ${error.message}`);
+                }
+                
+                updateQueueDisplay();
+                updateStats();
+            }
+            
+            isExecuting = false;
+            logMessage('[INFO] Ejecución secuencial completada');
+        }
+
+        async function executeParallel() {
+            isExecuting = true;
+            logMessage('[INFO] Iniciando ejecución paralela...');
+            
+            const promises = workers.map(worker => workerLoop(worker));
+            await Promise.all(promises);
+            
+            isExecuting = false;
+            logMessage('[INFO] Ejecución paralela completada');
+        }
+
+        async function workerLoop(worker) {
+            while (isExecuting && !isPaused) {
+                const queueItem = getNextQueuedItem();
+                if (!queueItem) {
+                    worker.status = 'idle';
+                    worker.currentTest = null;
+                    updateWorkerDisplay();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+                
+                worker.status = 'busy';
+                worker.currentTest = queueItem.name;
+                worker.startTime = Date.now();
+                queueItem.status = 'running';
+                
+                updateWorkerDisplay();
+                updateQueueDisplay();
+                updateStats();
+                
+                logMessage(`[WORKER ${worker.id}] Ejecutando: ${queueItem.name}`);
+                
+                try {
+                    const result = await executeTest(queueItem.test);
+                    queueItem.status = result.status === 'completed' ? 'completed' : 'failed';
+                    queueItem.result = result;
+                    
+                    logMessage(`[WORKER ${worker.id}] ${queueItem.name} - ${queueItem.status}`);
+                } catch (error) {
+                    queueItem.status = 'failed';
+                    logMessage(`[WORKER ${worker.id}] ERROR: ${queueItem.name} - ${error.message}`);
+                }
+                
+                updateQueueDisplay();
+                updateStats();
+            }
+            
+            worker.status = 'idle';
+            worker.currentTest = null;
+            updateWorkerDisplay();
+        }
+
+        function getNextQueuedItem() {
+            return executionQueue.find(item => item.status === 'queued');
+        }
+
+        async function executeTest(test) {
+            const response = await fetch('http://localhost:8869/api/executions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    test_case_id: test.id,
+                    project_id: 1,
+                    execution_name: `Batch - ${test.name}`
+                })
+            });
+            
+            return await response.json();
+        }
+
+        function updateQueueDisplay() {
+            const container = document.getElementById('executionQueue');
+            container.innerHTML = '';
+            
+            executionQueue.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `queue-item ${item.status}`;
+                div.innerHTML = `
+                    <span>${item.name}</span>
+                    <span class="badge">${item.status}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateStats() {
+            const queued = executionQueue.filter(item => item.status === 'queued').length;
+            const running = executionQueue.filter(item => item.status === 'running').length;
+            const completed = executionQueue.filter(item => item.status === 'completed').length;
+            const failed = executionQueue.filter(item => item.status === 'failed').length;
+            
+            document.getElementById('queuedTests').textContent = queued;
+            document.getElementById('runningTests').textContent = running;
+            document.getElementById('completedTests').textContent = completed;
+            document.getElementById('failedTests').textContent = failed;
+        }
+
+        function pauseExecution() {
+            isPaused = !isPaused;
+            const btn = event.target;
+            btn.textContent = isPaused ? '▶️ Reanudar' : '⏸️ Pausar';
+            logMessage(`[INFO] Ejecución ${isPaused ? 'pausada' : 'reanudada'}`);
+        }
+
+        function stopExecution() {
+            isExecuting = false;
+            isPaused = false;
+            logMessage('[INFO] Ejecución detenida por el usuario');
+            
+            // Reset all running items to queued
+            executionQueue.forEach(item => {
+                if (item.status === 'running') {
+                    item.status = 'queued';
+                }
+            });
+            
+            updateQueueDisplay();
+            updateStats();
+        }
+
+        function logMessage(message) {
+            const log = document.getElementById('executionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function startLogUpdater() {
+            setInterval(() => {
+                if (isExecuting) {
+                    logMessage('[HEARTBEAT] Sistema activo...');
+                }
+            }, 30000);
+        }
+
+        function calculateDuration(execution) {
+            if (!execution.executed_at || !execution.end_time) return 'N/A';
+            const start = new Date(execution.executed_at);
+            const end = new Date(execution.end_time);
+            const diff = (end - start) / 1000;
+            return `${diff.toFixed(2)}s`;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
+        function viewExecution(id) {
+            window.open(`http://localhost:8869/execution/${id}/details`, '_blank');
+        }
+
+        function scheduleExecution() {
+            const time = prompt('Programar ejecución para (formato: YYYY-MM-DD HH:MM):');
+            if (time) {
+                logMessage(`[INFO] Ejecución programada para: ${time}`);
+                // Implement scheduling logic here
+            }
+        }
+
+        async function startParallelExecution() {
+            const mode = document.getElementById('executionMode').value;
+            if (mode === 'sequential') {
+                document.getElementById('executionMode').value = 'parallel';
+            }
+            await startBatchExecution();
+        }
+    </script>
+</body>
+</html>

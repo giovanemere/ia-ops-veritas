@@ -3,12 +3,12 @@
 class VeritasUtils {
     static API_BASE = {
         portal: 'http://localhost:8869/api',
-        projectManager: 'http://localhost:8874/api',
-        repositoryAnalyzer: 'http://localhost:8875/api',
-        testManager: 'http://localhost:8870/api',
-        executionEngine: 'http://localhost:8871/api',
-        qualityAnalytics: 'http://localhost:8872/api',
-        evidenceManager: 'http://localhost:8873/api'
+        projectManager: 'http://localhost:8869/api',
+        repositoryAnalyzer: 'http://localhost:8869/api',
+        testManager: 'http://localhost:8869/api',
+        executionEngine: 'http://localhost:8869/api',
+        qualityAnalytics: 'http://localhost:8869/api',
+        evidenceManager: 'http://localhost:8869/api'
     };
 
     // HTTP Utilities
